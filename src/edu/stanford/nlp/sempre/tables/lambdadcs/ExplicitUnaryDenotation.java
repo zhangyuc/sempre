@@ -13,18 +13,22 @@ import fig.basic.*;
  */
 public class ExplicitUnaryDenotation extends UnaryDenotation {
 
-  protected final List<Value> values;
+  protected List<Value> values;
+  protected Set<Value> valuesSet;
 
   public ExplicitUnaryDenotation() {
     values = Collections.emptyList();
+    valuesSet = Collections.emptySet();
   }
 
   public ExplicitUnaryDenotation(Value value) {
     values = Collections.singletonList(value);
+    valuesSet = Collections.singleton(value);
   }
 
   public ExplicitUnaryDenotation(Collection<Value> values) {
     this.values = new ArrayList<>(values);
+    this.valuesSet = new HashSet<>(values);
   }
 
   @Override
@@ -36,16 +40,9 @@ public class ExplicitUnaryDenotation extends UnaryDenotation {
     return tree;
   }
 
-  protected ListValue cachedValue;
-
   @Override
-  public ListValue toValue() {
-    if (cachedValue != null) return cachedValue;
-    ListValue result = new ListValue(values);
-    if (LambdaDCSExecutor.opts.sortResults)
-      result = result.getSorted();
-    cachedValue = result;
-    return result;
+  public ListValue toListValue(KnowledgeGraph graph) {
+    return new ListValue(new ArrayList<>(valuesSet));
   }
 
   @Override
@@ -55,12 +52,12 @@ public class ExplicitUnaryDenotation extends UnaryDenotation {
 
   @Override
   public boolean contains(Object o) {
-    return values.contains(o);
+    return valuesSet.contains(o);
   }
 
   @Override
   public boolean containsAll(Collection<?> c) {
-    return values.containsAll(c);
+    return valuesSet.containsAll(c);
   }
 
   @Override
@@ -69,17 +66,13 @@ public class ExplicitUnaryDenotation extends UnaryDenotation {
   }
 
   @Override
-  public Object[] toArray() {
-    return values.toArray();
-  }
-
-  @Override public <T> T[] toArray(T[] a) {
-    return values.toArray(a);
+  public int size() {
+    return values.size();
   }
 
   @Override
-  public int size() {
-    return values.size();
+  public UnaryDenotation uniqued() {
+    return new ExplicitUnaryDenotation(valuesSet);
   }
 
   @Override
@@ -98,7 +91,7 @@ public class ExplicitUnaryDenotation extends UnaryDenotation {
   public UnaryDenotation aggregate(AggregateFormula.Mode mode) {
     if (mode == AggregateFormula.Mode.count) {
       // Count the set size, not the list size
-      return new ExplicitUnaryDenotation(new NumberValue(new HashSet<>(values).size()));
+      return new ExplicitUnaryDenotation(new NumberValue(valuesSet.size()));
     }
     return new ExplicitUnaryDenotation(DenotationUtils.aggregate(this, mode));
   }

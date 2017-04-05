@@ -1,9 +1,10 @@
 package edu.stanford.nlp.sempre;
 
-import java.util.*;
-
 import fig.basic.LispTree;
 import fig.basic.LogInfo;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ListValue extends Value {
   public final List<Value> values;
@@ -34,26 +35,9 @@ public class ListValue extends Value {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     ListValue that = (ListValue) o;
-    return values.equals(that.values);
+    if (!values.equals(that.values)) return false;
+    return true;
   }
 
   @Override public int hashCode() { return values.hashCode(); }
-
-  // Sorted on string representation
-  public ListValue getSorted() {
-    List<Value> sorted = new ArrayList<>(values);
-    Collections.sort(sorted,
-        (Value v1, Value v2) -> (
-            v1 == null ? "null" : v1.sortString()).compareTo(v2 == null ? "null" : v2.sortString()));
-    return new ListValue(sorted);
-  }
-
-  // Unique
-  public ListValue getUnique() {
-    List<Value> sorted = new ArrayList<>(new HashSet<>(values));
-    Collections.sort(sorted,
-        (Value v1, Value v2) -> (
-            v1 == null ? "null" : v1.sortString()).compareTo(v2 == null ? "null" : v2.sortString()));
-    return new ListValue(sorted);
-  }
 }

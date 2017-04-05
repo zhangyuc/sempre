@@ -33,24 +33,15 @@ public class BinaryTypeHint extends TypeHint {
     return new BinaryTypeHint(firstUpperBound, secondUpperBound, variableMap.plus(name, value));
   }
 
-  public BinaryTypeHint withFreeVar(String name) {
-    return new BinaryTypeHint(firstUpperBound, secondUpperBound, variableMap.plusFreeVar(name));
-  }
-
   public BinaryTypeHint reverse() {
     return newRestrictedBinary(secondUpperBound, firstUpperBound);
   }
 
-  public UnarylikeTypeHint first() {
-    return new UnarylikeTypeHint(firstUpperBound, null, variableMap);
+  public UnaryTypeHint first() {
+    return newRestrictedUnary(firstUpperBound);
   }
 
-  public UnarylikeTypeHint second() {
-    return new UnarylikeTypeHint(secondUpperBound, null, variableMap);
-  }
-
-  // Binary (a, b) = mapping from b to a
-  public UnarylikeTypeHint asMapping(String freeVar) {
-    return new UnarylikeTypeHint(firstUpperBound, secondUpperBound, variableMap.plusFreeVar(freeVar));
+  public UnaryTypeHint second() {
+    return newRestrictedUnary(secondUpperBound);
   }
 }

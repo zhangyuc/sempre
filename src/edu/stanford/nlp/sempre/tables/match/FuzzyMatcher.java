@@ -6,6 +6,7 @@ import edu.stanford.nlp.sempre.*;
 import edu.stanford.nlp.sempre.FuzzyMatchFn.FuzzyMatchFnMode;
 import edu.stanford.nlp.sempre.tables.*;
 import fig.basic.*;
+import edu.stanford.nlp.sempre.tables.TableKnowledgeGraph.*;
 
 /**
  * Perform fuzzy matching on the table knowledge graph.
@@ -99,50 +100,4 @@ public abstract class FuzzyMatcher {
   }
 
   abstract protected Collection<Formula> getAllFormulasInternal(FuzzyMatchFnMode mode);
-
-  // ============================================================
-  // Helper Functions: Construct Formulas
-  // ============================================================
-  /*
-   * ENTITIY --> fb:cell.___
-   *   UNARY --> (!fb.row.row.___ (fb:type.object.type fb:type.row))
-   *  BINARY --> fb:row.row.___
-   */
-
-  static Formula getEntityFormula(NameValue nameValue) {
-    return new ValueFormula<>(nameValue);
-  }
-
-  static Formula getEntityFormula(TableCell cell) {
-    return new ValueFormula<>(cell.properties.nameValue);
-  }
-
-  static Formula getEntityFormula(TableCellProperties properties) {
-    return new ValueFormula<>(properties.nameValue);
-  }
-
-  static Formula getUnaryFormula(TableColumn column) {
-    return new JoinFormula(
-        new ValueFormula<>(CanonicalNames.reverseProperty(column.relationNameValue)),
-        new JoinFormula(new ValueFormula<>(new NameValue(CanonicalNames.TYPE)),
-            new ValueFormula<>(new NameValue(TableTypeSystem.ROW_TYPE))));
-  }
-
-  static Formula getBinaryFormula(TableColumn column) {
-    return new ValueFormula<>(column.relationNameValue);
-  }
-
-  static Formula getConsecutiveBinaryFormula(TableColumn column) {
-    return new ValueFormula<>(column.relationConsecutiveNameValue);
-  }
-
-  static List<Formula> getNormalizedBinaryFormulas(TableColumn column) {
-    List<Formula> formulas = new ArrayList<>();
-    for (Value normalization : column.getAllNormalization()) {
-      formulas.add(new LambdaFormula("x", new JoinFormula(
-          new ValueFormula<>(column.relationNameValue), new JoinFormula(
-              new ValueFormula<>(normalization), new VariableFormula("x")))));
-    }
-    return formulas;
-  }
 }

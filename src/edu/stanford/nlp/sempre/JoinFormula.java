@@ -36,12 +36,6 @@ public class JoinFormula extends Formula {
     return tree;
   }
 
-  @Override
-  public void forEach(Function<Formula, Boolean> func) {
-    if (!func.apply(this)) { relation.forEach(func); child.forEach(func); }
-  }
-
-  @Override
   public Formula map(Function<Formula, Formula> func) {
     Formula result = func.apply(this);
     return result == null ? new JoinFormula(relation.map(func), child.map(func)) : result;
