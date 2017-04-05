@@ -729,17 +729,6 @@ addMode('tables', 'QA on HTML tables', lambda { |e| l(
     l(o('Params.l1Reg','lazy'), o('Params.l1RegCoeff', '2e-5')),
     l(o('Params.l1Reg','lazy'), o('Params.l1RegCoeff', '5e-5')),
   nil),
-  # Collaborative Pruning
-  letDefault(:cp, 1),
-  sel(:cp,
-  l(),
-  l(
-  o('enableCollaborativePruning'),
-  o('beamSize', 100),
-  o('maxNeighborRank', 100),
-  o('K', 40),
-  o('maxPredictedPatterns', 40)),
-  nil),
   # Features
   letDefault(:feat, 'none'),
   sel(:feat, {
@@ -781,6 +770,17 @@ addMode('tables', 'QA on HTML tables', lambda { |e| l(
       o('computeFuzzyMatchPredicates'),
     nil),
   }),
+  # Macro Grammar
+  letDefault(:macro, 0),
+  sel(:macro,
+  l(),
+  l(
+  o('enableCollaborativePruning'),
+  o('beamSize', 100),
+  o('maxNeighborRank', 100),
+  o('K', 40),
+  o('maxPredictedPatterns', 40)),
+  nil),
 nil) })
 
 def tablesGrammarPaths
@@ -832,8 +832,7 @@ def tablesDataPaths
         o('Dataset.inPaths',
           "train,#{baseDir}training.examples",
           "test,#{baseDir}pristine-unseen-tables.examples"),
-        o('Dataset.trainFrac', 1), o('Dataset.devFrac', 0),
-	o('neighborFilePath', "tables/exact_nearest_neighbors.v3.all"),
+        o('Dataset.trainFrac', 1), o('Dataset.devFrac', 0),o('neighborFilePath', "tables/exact_nearest_neighbors.v3.all"),
         let(:unseen, 1),
       nil),
     }
@@ -843,8 +842,7 @@ def tablesDataPaths
         o('Dataset.inPaths',
           "train,#{baseDir}random-split-seed-#{x}-train.examples",
           "dev,#{baseDir}random-split-seed-#{x}-test.examples",
-        nil),
-	o('neighborFilePath', "tables/exact_nearest_neighbors.v3.seed-1.train"),
+        nil),o('neighborFilePath', "tables/exact_nearest_neighbors.v3.seed-1.train"),
         let(:unseen, 1),
       nil)
     end
