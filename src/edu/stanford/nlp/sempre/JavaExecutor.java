@@ -2,7 +2,6 @@ package edu.stanford.nlp.sempre;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-
 import fig.basic.MapUtils;
 import fig.basic.Option;
 
@@ -24,8 +23,6 @@ public class JavaExecutor extends Executor {
   public static class Options {
     @Option(gloss = "Whether to convert NumberValue to int/double") public boolean convertNumberValues = true;
     @Option(gloss = "Print stack trace on exception") public boolean printStackTrace = false;
-    // the actual function will be called with the current ContextValue as its last argument if marked by contextPrefix
-    @Option(gloss = "Formula in the grammar whose name startsWith @ is context sensitive")  public String contextPrefix = "@";
   }
   public static Options opts = new Options();
 
@@ -137,13 +134,13 @@ public class JavaExecutor extends Executor {
     private static Object apply(LambdaFormula func, Object x) {
       // Apply the function func to x.  In order to do that, need to convert x into a value.
       Formula formula = Formulas.lambdaApply(func, new ValueFormula<Value>(toValue(x)));
-      return defaultExecutor.processFormula(formula, null);
+      return defaultExecutor.processFormula(formula);
     }
     private static Object apply(LambdaFormula func, Object x, Object y) {
       // Apply the function func to x and y.  In order to do that, need to convert x into a value.
       Formula formula = Formulas.lambdaApply(func, new ValueFormula<Value>(toValue(x)));
       formula = Formulas.lambdaApply((LambdaFormula) formula, new ValueFormula<Value>(toValue(y)));
-      return defaultExecutor.processFormula(formula, null);
+      return defaultExecutor.processFormula(formula);
     }
 
     public static List<Integer> range(int start, int end) {
@@ -158,8 +155,9 @@ public class JavaExecutor extends Executor {
     // We can do beta reduction here since macro substitution preserves the
     // denotation (unlike for lambda DCS).
     formula = Formulas.betaReduction(formula);
+
     try {
-      return new Response(toValue(processFormula(formula, context)));
+      return new Response(toValue(processFormula(formula)));
     } catch (Exception e) {
       // Comment this out if we expect lots of innocuous type checking failures
       if (opts.printStackTrace) e.printStackTrace();
@@ -167,27 +165,24 @@ public class JavaExecutor extends Executor {
     }
   }
 
-  private Object processFormula(Formula formula, ContextValue context) {
+  private Object processFormula(Formula formula) {
     if (formula instanceof ValueFormula)  // Unpack value and convert to object (e.g., for ints)
       return toObject(((ValueFormula) formula).value);
 
     if (formula instanceof CallFormula) {  // Invoke the function.
+      //LogInfo.logs("formula=%s", formula);
       // Recurse
       CallFormula call = (CallFormula) formula;
-      Object func = processFormula(call.func, context);
+      Object func = processFormula(call.func);
       List<Object> args = Lists.newArrayList();
       for (Formula arg : call.args) {
-        args.add(processFormula(arg, context));
+        args.add(processFormula(arg));
       }
 
       if (!(func instanceof NameValue))
         throw new RuntimeException("Invalid func: " + call.func + " => " + func);
 
       String id = ((NameValue) func).id;
-      if (id.indexOf(opts.contextPrefix) != -1) {
-        args.add(context);
-        id = id.replace(opts.contextPrefix, "");
-      }
       id = MapUtils.get(shortcuts, id, id);
 
       if (id.startsWith(".")) // Instance method

@@ -2,10 +2,8 @@ package edu.stanford.nlp.sempre;
 
 import fig.basic.LispTree;
 import fig.basic.Option;
-import fig.basic.Utils;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -81,22 +79,10 @@ public abstract class SemanticFn {
   public LispTree toLispTree() { return tree; }
   @Override public String toString() { return tree.toString(); }
 
-  // default does nothing
+ // default does nothing
   public void addFeedback(Example ex) { return; }
 
-  // default does nothing
+ // default does nothing
   public void sortOnFeedback(Params params) { return; }
-
-  /*
-   * Filter on type data to save time.
-   * Return a collection of DerivationGroup. The rule will be applied on each DerivationGroup.
-   *
-   * See an example in tables.grow.ApplyFn
-   */
-  public boolean supportFilteringOnTypeData() { return false; }
-  public Collection<ChildDerivationsGroup> getFilteredDerivations(
-      List<Derivation> derivations1, List<Derivation> derivations2) {
-    throw new UnsupportedOperationException();
-  }
 
 }

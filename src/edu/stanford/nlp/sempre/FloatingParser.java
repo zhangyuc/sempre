@@ -164,7 +164,7 @@ class FloatingParserState extends ParserState {
       if (FloatingParser.opts.executeAllDerivations && !(newDeriv.type instanceof FuncSemType))
         newDeriv.ensureExecuted(parser.executor, ex.context);
       
-      if (pruner.isPruned(newDeriv)) continue;
+      if (pruner.isPruned(ex, newDeriv)) continue;
       
       // Avoid repetitive floating cells
       addToChart(cell(rule.lhs, start, end, depth), newDeriv);

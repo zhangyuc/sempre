@@ -4,6 +4,8 @@ import java.util.*;
 
 import edu.stanford.nlp.sempre.*;
 import fig.basic.Pair;
+import edu.stanford.nlp.sempre.tables.TableKnowledgeGraph.*;
+
 
 public class FuzzyMatchCache {
 

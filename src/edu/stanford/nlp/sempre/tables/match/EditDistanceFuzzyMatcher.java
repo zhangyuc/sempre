@@ -5,6 +5,8 @@ import java.util.*;
 import edu.stanford.nlp.sempre.*;
 import edu.stanford.nlp.sempre.FuzzyMatchFn.FuzzyMatchFnMode;
 import edu.stanford.nlp.sempre.tables.*;
+import edu.stanford.nlp.sempre.tables.TableKnowledgeGraph.TableCell;
+import edu.stanford.nlp.sempre.tables.TableKnowledgeGraph.TableColumn;
 import fig.basic.*;
 
 /**
@@ -27,7 +29,7 @@ public class EditDistanceFuzzyMatcher extends FuzzyMatcher {
     @Option(gloss = "Maximum edit distance ratio")
     public double fuzzyMatchMaxEditDistanceRatio = 0;
     @Option(gloss = "Allow the query phrase to match part of the table cell content")
-    public boolean fuzzyMatchSubstring = false;
+    public boolean fuzzyMatchSubstring = true;
     @Option(gloss = "Minimum query phrase length (number of characters) to invoke substring matching")
     public int fuzzyMatchSubstringMinQueryLength = 3;
     @Option(gloss = "If the number of cells matching the query exceeds this, don't return individual matches (but still return the union)")
@@ -58,65 +60,40 @@ public class EditDistanceFuzzyMatcher extends FuzzyMatcher {
   allBinaryFormulas = new HashSet<>();
 
   protected void precompute() {
-    // unary and binary
-    for (TableColumn column : graph.columns) {
-      Formula unary = getUnaryFormula(column);
-      Formula binary = getBinaryFormula(column);
-      Formula consecutive = (opts.alsoReturnConsecutive && column.hasConsecutive()) ? getConsecutiveBinaryFormula(column) : null;
-      List<Formula> normalizedBinaries = opts.alsoAddNormalization ? getNormalizedBinaryFormulas(column) : null;
-      allUnaryFormulas.add(unary);
-      allBinaryFormulas.add(binary);
-      if (consecutive != null)
-        allBinaryFormulas.add(consecutive);
-      if (normalizedBinaries != null)
-        allBinaryFormulas.addAll(normalizedBinaries);
-      for (String s : getAllCollapsedForms(column.originalString)) {
-        MapUtils.addToSet(phraseToUnaryFormulas, s, unary);
-        MapUtils.addToSet(phraseToBinaryFormulas, s, binary);
-        if (consecutive != null)
-          MapUtils.addToSet(phraseToBinaryFormulas, s, consecutive);
-        if (normalizedBinaries != null)
-          for (Formula f : normalizedBinaries)
-            MapUtils.addToSet(phraseToBinaryFormulas, s, f);
-      }
-      if (opts.fuzzyMatchSubstring) {
-        for (String s : getAllSubstringCollapsedForms(column.originalString)) {
-          MapUtils.addToSet(substringToUnaryFormulas, s, unary);
-          MapUtils.addToSet(substringToBinaryFormulas, s, binary);
-          if (consecutive != null)
-            MapUtils.addToSet(substringToBinaryFormulas, s, consecutive);
-          if (normalizedBinaries != null)
-            for (Formula f : normalizedBinaries)
-              MapUtils.addToSet(substringToBinaryFormulas, s, f);
-        }
-      }
-    }
     // entity
-    for (TableCellProperties properties : graph.cellProperties) {
-      Formula entity = getEntityFormula(properties);
-      allEntityFormulas.add(entity);
-      for (String s : getAllCollapsedForms(properties.originalString))
-        MapUtils.addToSet(phraseToEntityFormulas, s, entity);
-      if (opts.fuzzyMatchSubstring) {
-        for (String s : getAllSubstringCollapsedForms(properties.originalString)) {
-          MapUtils.addToSet(substringToEntityFormulas, s, entity);
-        }
-      }
-    }
-    // part (treated as extra entities)
-    if (opts.alsoMatchPart) {
-      for (NameValue value : graph.cellParts) {
-        Formula partEntity = getEntityFormula(value);
-        allEntityFormulas.add(partEntity);
-        for (String s : getAllCollapsedForms(value.description))
-          MapUtils.addToSet(phraseToEntityFormulas, s, partEntity);
-        if (opts.fuzzyMatchSubstring) {
-          for (String s : getAllSubstringCollapsedForms(value.description)) {
-            MapUtils.addToSet(substringToEntityFormulas, s, partEntity);
-          }
-        }
-      }
-    }
+	for (TableColumn column : graph.columns) {
+		// unary and binary
+		Formula unary = new JoinFormula(
+		      new ValueFormula<>(KnowledgeGraph.getReversedPredicate(column.propertyNameValue)),
+		      new JoinFormula(new ValueFormula<>(new NameValue(CanonicalNames.TYPE)),
+		                      new ValueFormula<>(new NameValue(TableTypeSystem.ROW_TYPE)))
+		);
+		Formula binary = new ValueFormula<>(column.propertyNameValue);
+		allUnaryFormulas.add(unary);
+		allBinaryFormulas.add(binary);
+		for (String s : getAllCollapsedForms(column.originalString)) {
+		    MapUtils.addToSet(phraseToUnaryFormulas, s, unary);
+		    MapUtils.addToSet(phraseToBinaryFormulas, s, binary);
+		}
+//		if (opts.fuzzyMatchSubstring) {
+//	      for (String s : getAllSubstringCollapsedForms(column.originalString)) {
+//	    	MapUtils.addToSet(substringToEntityFormulas, s, unary);
+//	        MapUtils.addToSet(substringToEntityFormulas, s, binary);
+//	      }
+//		}
+		  
+		for (TableCell cell : column.children) {
+	        Formula entity = new ValueFormula<>(cell.properties.entityNameValue);
+	        allEntityFormulas.add(entity);
+	        for (String s : getAllCollapsedForms(cell.properties.originalString))
+	          MapUtils.addToSet(phraseToEntityFormulas, s, entity);
+	        if (opts.fuzzyMatchSubstring) {
+	          for (String s : getAllSubstringCollapsedForms(cell.properties.originalString)) {
+	            MapUtils.addToSet(substringToEntityFormulas, s, entity);
+	          }
+	        }
+		}
+	}
     // debug print
     if (opts.verbose >= 5) {
       debugPrint("phrase Entity", phraseToEntityFormulas);
@@ -295,8 +272,6 @@ public class EditDistanceFuzzyMatcher extends FuzzyMatcher {
     if ((formula = getUnion(formulas, TableTypeSystem.CELL_NAME_PREFIX)) != null)
       unions.add(formula);
     // fb:part...
-    if ((formula = getUnion(formulas, TableTypeSystem.PART_NAME_PREFIX)) != null)
-      unions.add(formula);
     return unions;
   }
 

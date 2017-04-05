@@ -29,7 +29,7 @@ public final class TypeInference {
   public static Options opts = new Options();
 
   private static TypeLookup typeLookup;
-  public static TypeLookup getTypeLookup() {
+  private static TypeLookup getTypeLookup() {
     if (typeLookup == null)
       typeLookup = (TypeLookup) Utils.newInstanceHard(SempreUtils.resolveClassName(opts.typeLookup));
     return typeLookup;
@@ -56,43 +56,31 @@ public final class TypeInference {
     // putting types in (see JavaExecutor).
   }
 
-  private static final ValueFormula<NameValue> typeFormula = new ValueFormula<NameValue>(new NameValue(CanonicalNames.TYPE));
+  private static final ValueFormula typeFormula = new ValueFormula(new NameValue(CanonicalNames.TYPE));
 
   private static final Set<Formula> comparisonFormulas = new HashSet<>(Arrays.asList(
-      new ValueFormula<NameValue>(new NameValue("<")),
-      new ValueFormula<NameValue>(new NameValue(">")),
-      new ValueFormula<NameValue>(new NameValue("<=")),
-      new ValueFormula<NameValue>(new NameValue(">="))));
+      new ValueFormula(new NameValue("<")),
+      new ValueFormula(new NameValue(">")),
+      new ValueFormula(new NameValue("<=")),
+      new ValueFormula(new NameValue(">="))));
 
-  @SuppressWarnings("serial")
   private static class TypeException extends Exception { }
 
   private static class Env {
     private final TypeLookup typeLookup;
-    private final boolean allowFreeVariable;      // Don't throw an error if there is an unbound variable.
     private final ImmutableAssocList<String, Ref<SemType>> list;
-    private Env(ImmutableAssocList<String, Ref<SemType>> list, TypeLookup typeLookup, boolean allowFreeVariable) {
+    private Env(ImmutableAssocList<String, Ref<SemType>> list, TypeLookup typeLookup) {
       this.list = list;
       this.typeLookup = typeLookup;
-      this.allowFreeVariable = allowFreeVariable;
     }
-    public Env(TypeLookup typeLookup, boolean allowFreeVariable) {
-      this(ImmutableAssocList.emptyList, typeLookup, allowFreeVariable);
-    }
+    public Env(TypeLookup typeLookup) { this(ImmutableAssocList.emptyList, typeLookup); }
 
     public Env addVar(String var) {
-      return new Env(list.prepend(var, new Ref<SemType>(SemType.topType)), typeLookup, allowFreeVariable);
+      return new Env(list.prepend(var, new Ref<SemType>(SemType.topType)), typeLookup);
     }
     public SemType updateType(String var, SemType type) {
       Ref<SemType> ref = list.get(var);
-      if (ref == null) {
-        if (!allowFreeVariable)
-          throw new RuntimeException("Free variable not defined: " + var);
-        else {
-          // This does not save the new type to the list
-          ref = new Ref<SemType>(SemType.topType);
-        }
-      }
+      if (ref == null) throw new RuntimeException("Free variable not defined: " + var);
       SemType newType = ref.value.meet(type);
       if (!newType.isValid() && opts.verbose >= 2)
         LogInfo.warnings("Invalid type from [%s MEET %s]", ref.value, type);
@@ -115,19 +103,13 @@ public final class TypeInference {
 
   // Use the default typeLookup
   public static SemType inferType(Formula formula) {
-    return inferType(formula, getTypeLookup(), false);
-  }
-  public static SemType inferType(Formula formula, boolean allowFreeVariable) {
-    return inferType(formula, getTypeLookup(), allowFreeVariable);
-  }
-  public static SemType inferType(Formula formula, TypeLookup typeLookup) {
-    return inferType(formula, typeLookup, false);
+    return inferType(formula, getTypeLookup());
   }
 
-  public static SemType inferType(Formula formula, TypeLookup typeLookup, boolean allowFreeVariable) {
+  public static SemType inferType(Formula formula, TypeLookup typeLookup) {
     SemType type;
     try {
-      type = inferType(formula, new Env(typeLookup, allowFreeVariable), SemType.topType);
+      type = inferType(formula, new Env(typeLookup), SemType.topType);
     } catch (TypeException e) {
       type = SemType.bottomType;
     }
@@ -149,7 +131,7 @@ public final class TypeInference {
       return check(env.updateType(((VariableFormula) formula).name, type));
 
     } else if (formula instanceof ValueFormula) {
-      Value value = ((ValueFormula<?>) formula).value;
+      Value value = ((ValueFormula) formula).value;
       if (value instanceof NumberValue) return check(type.meet(SemType.numberType));
       else if (value instanceof StringValue) return check(type.meet(SemType.stringType));
       else if (value instanceof DateValue) return check(type.meet(SemType.dateType));
@@ -165,9 +147,7 @@ public final class TypeInference {
         } else {  // Binary
           // Careful of the reversal.
           SemType propertyType = null;
-          if (CanonicalNames.SPECIAL_SEMTYPES.containsKey(id)) {
-            propertyType = CanonicalNames.SPECIAL_SEMTYPES.get(id);
-          } else if (!CanonicalNames.isReverseProperty(id)) {
+          if (!CanonicalNames.isReverseProperty(id)) {
             propertyType = env.typeLookup.getPropertyType(id);
           } else {
             propertyType = env.typeLookup.getPropertyType(CanonicalNames.reverseProperty(id));
@@ -227,11 +207,8 @@ public final class TypeInference {
 
     } else if (formula instanceof AggregateFormula) {
       AggregateFormula aggregate = (AggregateFormula) formula;
-      inferType(aggregate.child, env, SemType.anyType);
-      if (aggregate.mode == AggregateFormula.Mode.count)
-        return check(SemType.numberType.meet(type));
-      else
-        return check(SemType.numberOrDateType.meet(type));
+      SemType childType = inferType(aggregate.child, env, SemType.anyType);
+      return check(SemType.numberType.meet(type));
 
     } else if (formula instanceof ArithmeticFormula) {
       ArithmeticFormula arith = (ArithmeticFormula) formula;
@@ -259,7 +236,7 @@ public final class TypeInference {
       initCallTypeInfo();
       CallFormula call = (CallFormula) formula;
       if (!(call.func instanceof ValueFormula)) return SemType.bottomType;
-      Value value = ((ValueFormula<?>) call.func).value;
+      Value value = ((ValueFormula) call.func).value;
       if (!(value instanceof NameValue)) return SemType.bottomType;
       String func = ((NameValue) value).id;
 

@@ -36,8 +36,7 @@ public class Example {
 
   // What we should try to predict.
   @JsonProperty public Formula targetFormula;  // Logical form (e.g., database query)
-  public List<Formula> alternativeFormulas;    // Alternative logical form (less canonical)
-  @JsonProperty public Value targetValue;      // Denotation (e.g., answer)
+  @JsonProperty public Value targetValue;  // Denotation (e.g., answer)
 
   //// Information after preprocessing (e.g., tokenization, POS tagging, NER, syntactic parsing, etc.).
   public LanguageInfo languageInfo = null;
@@ -47,7 +46,7 @@ public class Example {
   // Predicted derivations (sorted by score).
   public List<Derivation> predDerivations;
 
-  // Temporary state while parsing an Example (see Derivation.java for analogous structure).
+  // Temporary state while parsing an Example (see Derivation.java for analogous struture).
   private Map<String, Object> tempState;
 
   // Statistics relating to processing the example.
@@ -59,6 +58,7 @@ public class Example {
     private ContextValue context;
     private Formula targetFormula;
     private Value targetValue;
+    private List<Derivation> predDerivations;
     private LanguageInfo languageInfo;
 
     public Builder setId(String id) { this.id = id; return this; }
@@ -103,12 +103,6 @@ public class Example {
 
   public void setContext(ContextValue context) { this.context = context; }
   public void setTargetFormula(Formula targetFormula) { this.targetFormula = targetFormula; }
-  public void setAlternativeFormulas(List<Formula> alternativeFormulas) { this.alternativeFormulas = alternativeFormulas; }
-  public void addAlternativeFormula(Formula alternativeFormula) {
-    if (this.alternativeFormulas == null)
-      this.alternativeFormulas = new ArrayList<>();
-    this.alternativeFormulas.add(alternativeFormula);
-  }
   public void setTargetValue(Value targetValue) { this.targetValue = targetValue; }
 
   public String spanString(int start, int end) {
@@ -159,35 +153,18 @@ public class Example {
     for (int i = 1; i < tree.children.size(); i++) {
       LispTree arg = tree.child(i);
       String label = arg.child(0).value;
-      if ("tokens".equals(label)) {
-        for (LispTree child : arg.child(1).children)
-          ex.languageInfo.tokens.add(child.value);
-      } else if ("lemmaTokens".equals(label)) {
-        for (LispTree child : arg.child(1).children)
-          ex.languageInfo.lemmaTokens.add(child.value);
-      } else if ("posTags".equals(label)) {
-        for (LispTree child : arg.child(1).children)
-          ex.languageInfo.posTags.add(child.value);
-      } else if ("nerTags".equals(label)) {
-        for (LispTree child : arg.child(1).children)
-          ex.languageInfo.nerTags.add(child.value);
-      } else if ("nerValues".equals(label)) {
-        for (LispTree child : arg.child(1).children)
-          ex.languageInfo.nerValues.add("null".equals(child.value) ? null : child.value);
-      } else if ("alternativeFormula".equals(label)) {
-        ex.addAlternativeFormula(Formulas.fromLispTree(arg.child(1)));
+      if ("posTags".equals(label) || "nerTags".equals(label) || "url".equals(label)) {
+        // Do nothing
+      } else if ("tokens".equals(label)) {
+        int n = arg.child(1).children.size();
+        for (int j = 0; j < n; j++)
+          ex.languageInfo.tokens.add(arg.child(1).child(j).value);
       } else if ("evaluation".equals(label)) {
         ex.evaluation = Evaluation.fromLispTree(arg.child(1));
       } else if ("predDerivations".equals(label)) {
-        // Featurized
         ex.predDerivations = new ArrayList<>();
         for (int j = 1; j < arg.children.size(); j++)
           ex.predDerivations.add(derivationFromLispTree(arg.child(j)));
-      } else if ("rawDerivations".equals(label) || "derivations".equals(label)) {
-        // Unfeaturized
-        ex.predDerivations = new ArrayList<>();
-        for (int j = 1; j < arg.children.size(); j++)
-          ex.predDerivations.add(rawDerivationFromLispTree(arg.child(j)));
       } else if (!Sets.newHashSet("id", "utterance", "targetFormula", "targetValue", "targetValues", "context", "original").contains(label)) {
         throw new RuntimeException("Invalid example argument: " + arg);
       }
@@ -280,14 +257,7 @@ public class Example {
     return tree;
   }
 
-  /**
-   * Parse a featurized derivation.
-   *
-   * Format:
-   *   ({compatibility} {prob} {score} {value|null} {formula} {features})
-   *   where {features} = (({key} {value}) ({key} {value}) ...)
-   */
-  public static Derivation derivationFromLispTree(LispTree item) {
+  private static Derivation derivationFromLispTree(LispTree item) {
     Derivation.Builder b = new Derivation.Builder()
         .cat(Rule.rootCat)
         .start(-1)
@@ -316,7 +286,7 @@ public class Example {
     return b.createDerivation();
   }
 
-  public static LispTree derivationToLispTree(Derivation deriv) {
+  private static LispTree derivationToLispTree(Derivation deriv) {
     LispTree item = LispTree.proto.newList();
 
     item.addChild(deriv.compatibility + "");
@@ -335,44 +305,6 @@ public class Example {
     return item;
   }
 
-  /**
-   * Parse a LispTree with the format created by deriv.toLispTree().
-   * Due to the complexity, rules and children are not parsed.
-   *
-   * Format:
-   *   (derivation [(formula {formula})] [(value {value})] [(type {type})]
-   *               [(canonicalUtterance {canonicalUtterance})])
-   * @param item
-   * @return
-   */
-  public static Derivation rawDerivationFromLispTree(LispTree item) {
-    Derivation.Builder b = new Derivation.Builder()
-    .cat(Rule.rootCat)
-    .start(-1).end(-1)
-    .rule(Rule.nullRule)
-    .children(new ArrayList<Derivation>());
-    for (int i = 1; i < item.children.size(); i++) {
-      LispTree arg = item.child(i);
-      String label = arg.child(0).value;
-      if ("formula".equals(label)) {
-        b.formula(Formulas.fromLispTree(arg.child(1)));
-      } else if ("value".equals(label)) {
-        b.value(Values.fromLispTree(arg.child(1)));
-      } else if ("type".equals(label)) {
-        b.type(SemType.fromLispTree(arg.child(1)));
-      } else if ("canonicalUtterance".equals(label)) {
-        b.canonicalUtterance(arg.child(1).value);
-      } else {
-        throw new RuntimeException("Invalid example argument: " + arg);
-      }
-    }
-    return b.createDerivation();
-  }
-
-  public static LispTree rawDerivationToLispTree(Derivation deriv) {
-    return deriv.toLispTree();
-  }
-
   public Map<String, Object> getTempState() {
     // Create the tempState if it doesn't exist.
     if (tempState == null)
@@ -381,14 +313,5 @@ public class Example {
   }
   public void clearTempState() {
     tempState = null;
-  }
-
-  /**
-   * Clean up things to save memory
-   */
-  public void clean() {
-    predDerivations.clear();
-    if (context.graph != null)
-      context.graph.clean();
   }
 }

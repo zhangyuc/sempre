@@ -1,65 +1,36 @@
 package edu.stanford.nlp.sempre.tables.lambdadcs;
 
-import edu.stanford.nlp.sempre.PairListValue;
-import fig.basic.LispTree;
+import edu.stanford.nlp.sempre.*;
+import fig.basic.*;
 
 /**
- * Binary denotation: a mapping from value to values.
- *
- * Share the implementation with MappingDenotation by using PairList.
- *
+ * Binary denotation: a mapping from value to value.
  * @author ppasupat
  */
-public class BinaryDenotation<PL extends PairList> implements Binarylike {
-
-  protected final PL pairList;
+public abstract class BinaryDenotation {
 
   @Override
   public String toString() {
     return toLispTree().toString();
   }
 
-  public BinaryDenotation(PL pairList) {
-    this.pairList = pairList;
-  }
+  public abstract LispTree toLispTree();
 
-  @Override
-  public LispTree toLispTree() {
-    return LispTree.proto.newList("binary", pairList.toLispTree());
-  }
+  public abstract TableValue toTableValue(KnowledgeGraph graph);
 
-  @Override
-  public PairListValue toValue() {
-    return pairList.toValue();
-  }
+  /** Return all y such that for some x in firsts, (x,y) in binary */
+  public abstract UnaryDenotation joinFirst(UnaryDenotation firsts, KnowledgeGraph graph);
 
-  public MappingDenotation<PL> asMapping(String domainVar) {
-    return new MappingDenotation<PL>(domainVar, pairList);
-  }
+  /** Return all x such that for some y in seconds, (x,y) in binary */
+  public abstract UnaryDenotation joinSecond(UnaryDenotation seconds, KnowledgeGraph graph);
 
-  @Override
-  public Binarylike reverse() {
-    return new BinaryDenotation<>(pairList.reverse());
-  }
+  /** Return all (y,x) such that (x,y) in binary */
+  public abstract BinaryDenotation reverse();
 
-  @Override
-  public UnaryDenotation joinOnKey(UnaryDenotation keys) {
-    return pairList.joinOnKey(keys);
-  }
+  /** Return all (x,y) such that x in firsts and (x,y) in binary */
+  public abstract ExplicitBinaryDenotation explicitlyFilterFirst(UnaryDenotation firsts, KnowledgeGraph graph);
 
-  @Override
-  public UnaryDenotation joinOnValue(UnaryDenotation values) {
-    return pairList.joinOnValue(values);
-  }
-
-  @Override
-  public BinaryDenotation<ExplicitPairList> explicitlyFilterOnKey(UnaryDenotation keys) {
-    return new BinaryDenotation<>(pairList.explicitlyFilterOnKey(keys));
-  }
-
-  @Override
-  public BinaryDenotation<ExplicitPairList> explicitlyFilterOnValue(UnaryDenotation values) {
-    return new BinaryDenotation<>(pairList.explicitlyFilterOnValue(values));
-  }
+  /** Return all (x,y) such that y in seconds and (x,y) in binary */
+  public abstract ExplicitBinaryDenotation explicitlyFilterSecond(UnaryDenotation seconds, KnowledgeGraph graph);
 
 }

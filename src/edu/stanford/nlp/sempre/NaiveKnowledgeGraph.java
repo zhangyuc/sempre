@@ -84,14 +84,25 @@ public class NaiveKnowledgeGraph extends KnowledgeGraph {
     }
   }
 
+  @Override
+  public Collection<Formula> getFuzzyMatchedFormulas(String term, FuzzyMatchFn.FuzzyMatchFnMode mode) {
+    throw new RuntimeException("Not implemented yet");
+  }
+
+  @Override
+  public Collection<Formula> getAllFormulas(FuzzyMatchFn.FuzzyMatchFnMode mode) {
+    throw new RuntimeException("Not implemented yet");
+  }
+
   // ============================================================
   // Queries
   // ============================================================
 
   @Override
   public List<Value> joinFirst(Value r, Collection<Value> firsts) {
-    if (CanonicalNames.isReverseProperty(r))
-      return joinSecond(CanonicalNames.reverseProperty(r), firsts);
+    Value reversed = isReversedRelation(r);
+    if (reversed != null)
+      return joinSecond(reversed, firsts);
     List<Value> seconds = new ArrayList<>();
     List<KnowledgeGraphTriple> relationTriples = relationToTriples.get(r);
     if (relationTriples != null) {
@@ -105,8 +116,9 @@ public class NaiveKnowledgeGraph extends KnowledgeGraph {
 
   @Override
   public List<Value> joinSecond(Value r, Collection<Value> seconds) {
-    if (CanonicalNames.isReverseProperty(r))
-      return joinFirst(CanonicalNames.reverseProperty(r), seconds);
+    Value reversed = isReversedRelation(r);
+    if (reversed != null)
+      return joinFirst(reversed, seconds);
     List<Value> firsts = new ArrayList<>();
     List<KnowledgeGraphTriple> relationTriples = relationToTriples.get(r);
     if (relationTriples != null) {
@@ -120,8 +132,9 @@ public class NaiveKnowledgeGraph extends KnowledgeGraph {
 
   @Override
   public List<Pair<Value, Value>> filterFirst(Value r, Collection<Value> firsts) {
-    if (CanonicalNames.isReverseProperty(r))
-      return getReversedPairs(filterSecond(CanonicalNames.reverseProperty(r), firsts));
+    Value reversed = isReversedRelation(r);
+    if (reversed != null)
+      return getReversedPairs(filterSecond(reversed, firsts));
     List<Pair<Value, Value>> pairs = new ArrayList<>();
     List<KnowledgeGraphTriple> relationTriples = relationToTriples.get(r);
     if (relationTriples != null) {
@@ -135,8 +148,9 @@ public class NaiveKnowledgeGraph extends KnowledgeGraph {
 
   @Override
   public List<Pair<Value, Value>> filterSecond(Value r, Collection<Value> seconds) {
-    if (CanonicalNames.isReverseProperty(r))
-      return getReversedPairs(filterFirst(CanonicalNames.reverseProperty(r), seconds));
+    Value reversed = isReversedRelation(r);
+    if (reversed != null)
+      return getReversedPairs(filterFirst(reversed, seconds));
     List<Pair<Value, Value>> pairs = new ArrayList<>();
     List<KnowledgeGraphTriple> relationTriples = relationToTriples.get(r);
     if (relationTriples != null) {

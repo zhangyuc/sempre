@@ -4,14 +4,14 @@ import edu.stanford.nlp.sempre.*;
 import fig.exec.Execution;
 
 /**
- * Load the examples and derivations from SerializedDumper, and then run the learner.
+ * Load the examples and derivations from SerealizeDumper.
  */
 public class SerializedLoader implements Runnable {
+
   public static void main(String[] args) {
     Execution.run(args, "SerializedLoaderMain", new SerializedLoader(), Master.getOptionsParser());
   }
 
-  @Override
   public void run() {
     Builder builder = new Builder();
     builder.build();
@@ -24,4 +24,3 @@ public class SerializedLoader implements Runnable {
   }
 
 }
-
