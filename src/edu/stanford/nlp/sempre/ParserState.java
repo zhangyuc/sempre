@@ -1,7 +1,17 @@
 package edu.stanford.nlp.sempre;
 
-import java.util.*;
-import fig.basic.*;
+import fig.basic.Fmt;
+import fig.basic.LogInfo;
+import fig.basic.NumUtils;
+import fig.basic.Evaluation;
+import fig.basic.Option;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import edu.stanford.nlp.sempre.cprune.*; 
+import edu.stanford.nlp.sempre.cprune.CollaborativePruningComputer.Mode;
 
 /**
  * Actually does the parsing.  Main method is infer(), whose job is to fill in
@@ -12,15 +22,11 @@ import fig.basic.*;
 public abstract class ParserState {
   public static class Options {
     @Option(gloss = "Use a custom distribution for computing expected counts")
-    public CustomExpectedCount customExpectedCounts = CustomExpectedCount.NONE;
-    @Option(gloss = "For customExpectedCounts = TOP, only update if good < bad + margin")
-    public double contrastiveMargin = 1e6;    // default = always update
+    public CustomExpectedCount customExpectedCounts = CustomExpectedCount.TOP;
     @Option(gloss = "Whether to prune based on probability difference")
     public boolean pruneByProbDiff = false;
     @Option(gloss = "Difference in probability for pruning by prob diff")
     public double probDiffPruningThresh = 100;
-    @Option(gloss = "Throw features away after scoring to save memory")
-    public boolean throwFeaturesAway = false;
   }
   public static Options opts = new Options();
 
@@ -59,31 +65,49 @@ public abstract class ParserState {
     this.numTokens = ex.numTokens();
   }
 
-  protected int getBeamSize() { return Parser.opts.beamSize; }
+  protected int getBeamSize(){
+	  return Parser.opts.beamSize; 
+  }
 
   // Main entry point.  Should set all the output variables.
   public abstract void infer();
-
+  
+  protected void recursiveFeaturizeAndScoreDerivation(Derivation deriv) {
+	  for (Derivation child: deriv.children){
+		  recursiveFeaturizeAndScoreDerivation(child);
+	  }
+	  parser.extractor.extractLocal(ex, deriv);
+	  deriv.computeScoreLocal(params);
+  }
+  
   protected void featurizeAndScoreDerivation(Derivation deriv) {
     if (deriv.isFeaturizedAndScored()) {
-      LogInfo.warnings("Derivation already featurized: %s", deriv);
-      return;
-    }
-
-    // Compute features
+	    LogInfo.warnings("Derivation already featurized: %s", deriv);
+	    return;
+	}
+	  
+//	if (CollaborativePruningComputer.opts.enableCollaborativePruning && 
+//			CollaborativePruningComputer.mode == Mode.EXPLORE){
+//		if (deriv.isRootCat() && parser.valueEvaluator.getCompatibility(ex.targetValue, deriv.value) == 1){
+//            recursiveFeaturizeAndScoreDerivation(deriv);
+//		}
+//		else{
+//			deriv.computeScoreLocal(params);
+//		}
+//	}
+//	else{
+//	    parser.extractor.extractLocal(ex, deriv);
+//        deriv.computeScoreLocal(params);
+//	}
+	
     parser.extractor.extractLocal(ex, deriv);
-
-    // Compute score
     deriv.computeScoreLocal(params);
-
-    if (opts.throwFeaturesAway)
-      deriv.clearFeatures();
-
-    if (parser.verbose(5)) {
-      LogInfo.logs("featurizeAndScoreDerivation(score=%s) %s %s: %s [rule: %s]",
-          Fmt.D(deriv.score), deriv.cat, ex.spanString(deriv.start, deriv.end), deriv, deriv.rule);
-    }
-    numOfFeaturizedDerivs++;
+           
+	if (parser.verbose(5)) {
+	    LogInfo.logs("featurizeAndScoreDerivation(score=%s) %s %s: %s [rule: %s]",
+	                Fmt.D(deriv.score), deriv.cat, ex.spanString(deriv.start, deriv.end), deriv, deriv.rule);
+	}
+	numOfFeaturizedDerivs++;
   }
 
   /**
@@ -99,8 +123,7 @@ public abstract class ParserState {
       maxCellSize = derivations.size();
       maxCellDescription = cellDescription;
       if (maxCellSize > 5000)
-        LogInfo.logs("ParserState.pruneCell %s: maxCellSize = %s entries (not pruned yet)",
-            maxCellDescription, maxCellSize);
+        LogInfo.logs("ParserState.pruneCell %s: %s entries", maxCellDescription, maxCellSize);
     }
 
     // The extra code blocks in here that set |deriv.maxXBeamPosition|
@@ -134,12 +157,14 @@ public abstract class ParserState {
     Derivation.sortByScore(derivations);
 
     // Print out information
-    if (Parser.opts.verbose >= 3) {
+    if (parser.opts.verbose >= 3) {
       LogInfo.begin_track("ParserState.pruneCell(%s): %d derivations", cellDescription, derivations.size());
       for (Derivation deriv : derivations) {
         LogInfo.logs("%s(%s,%s): %s %s, [score=%s]", deriv.cat, deriv.start, deriv.end, deriv.formula,
-            deriv.canonicalUtterance, deriv.score);
+                deriv.canonicalUtterance, deriv.score);
       }
+
+
       LogInfo.end_track();
     }
 
@@ -167,9 +192,6 @@ public abstract class ParserState {
     else {
       // Keep only the top hypotheses
       int beamSize = getBeamSize();
-      if (derivations.size() > beamSize && Parser.opts.verbose >= 1) {
-        LogInfo.logs("ParserState.pruneCell %s: Pruning %d -> %d derivations", cellDescription, derivations.size(), beamSize);
-      }
       while (derivations.size() > beamSize) {
         derivations.remove(derivations.size() - 1);
         fallOffBeam = true;
@@ -333,14 +355,11 @@ public abstract class ParserState {
         }
       }
     }
-    if (chosenGood == -1 || chosenBad == -1 || chosenGoodScore >= chosenBadScore + opts.contrastiveMargin)
-      return null;
-    return new int[] {chosenGood, chosenBad};
+    return (chosenGood == -1 || chosenBad == -1) ? null : new int[] {chosenGood, chosenBad};
   }
 
   private static int[] getRandomDerivations(List<Derivation> derivations) {
     int chosenGood = -1, chosenBad = -1, numGoodSoFar = 0, numBadSoFar = 0;
-    // Get a uniform random sample from the stream
     for (int i = 0; i < derivations.size(); i++) {
       Derivation deriv = derivations.get(i);
       if (deriv.compatibility == 1) {
@@ -356,5 +375,37 @@ public abstract class ParserState {
       }
     }
     return (chosenGood == -1 || chosenBad == -1) ? null : new int[] {chosenGood, chosenBad};
+  }
+  
+  public void buildDerivations(){
+	  
+  }
+  
+  // Collaborative Pruning
+  protected List<Rule> rules;
+  protected List<Rule> catUnaryRules;
+  
+  public void explore() {
+	  CollaborativePruningComputer.initialize(ex, CollaborativePruningComputer.Mode.EXPLORE);
+	  rules = parser.grammar.rules;
+	  catUnaryRules = parser.getCatUnaryRules();
+	  
+	  buildDerivations();
+      CollaborativePruningComputer.stats.totalExplore += 1;
+      if (CollaborativePruningComputer.foundConsistentDerivation)
+    	  CollaborativePruningComputer.stats.successfulExplore += 1;
+  }
+  
+  public boolean exploit() {
+	  CollaborativePruningComputer.initialize(ex, CollaborativePruningComputer.Mode.EXPLOIT);
+	  rules = CollaborativePruningComputer.predictedRules;
+	  catUnaryRules = CollaborativePruningComputer.predictedCatUnaryRules;
+	  
+	  buildDerivations();	  
+	  boolean succeeds = CollaborativePruningComputer.foundConsistentDerivation;
+	  CollaborativePruningComputer.stats.totalExploit += 1;
+      if (succeeds)
+    	  CollaborativePruningComputer.stats.successfulExploit += 1;
+      return succeeds;
   }
 }
