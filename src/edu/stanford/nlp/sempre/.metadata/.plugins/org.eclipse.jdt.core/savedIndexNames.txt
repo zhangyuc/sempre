@@ -1,0 +1,2 @@
+INDEX VERSION 1.127+/home/yuczhang/afs/sempre/src/edu/stanford/nlp/sempre/.metadata/.plugins/org.eclipse.jdt.core
+3767386908.index
