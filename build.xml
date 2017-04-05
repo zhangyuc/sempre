@@ -25,7 +25,7 @@
     <antcall target="compile.released"/>
   </target>
 
-  <target name="compile.released" depends="init,core,cache,corenlp,freebase,tables,overnight"/>
+  <target name="compile.released" depends="init,core,cache,corenlp,freebase,tables,overnight,cprune"/>
 
   <!-- Compile core -->
   <target name="core" depends="init">
@@ -47,6 +47,16 @@
     </javac>
     <jar destfile="${libsempre}/sempre-cache.jar" basedir="${classes}/cache"/>
   </target>
+	
+  <!-- Compile cprune -->
+  <target name="cprune" depends="init">
+	<echo message="Compiling ${ant.project.name}: cprune"/>
+	<mkdir dir="${classes}/cprune"/>
+    <javac srcdir="${src}" destdir="${classes}/cprune" classpathref="lib.path" debug="true" includeantruntime="false" source="${source}" target="${target}">
+      <include name="edu/stanford/nlp/sempre/cprune/"/>
+    </javac>
+    <jar destfile="${libsempre}/sempre-cprune.jar" basedir="${classes}/cprune"/>
+  </target>	
 
   <!-- Compile corenlp -->
   <target name="corenlp" depends="init,core,cache">
@@ -69,7 +79,7 @@
   </target>
 
   <!-- Compile tables -->
-  <target name="tables" depends="init,core,corenlp">
+  <target name="tables" depends="init,core,corenlp,cprune">
     <echo message="Compiling ${ant.project.name}: tables"/>
     <mkdir dir="${classes}/tables"/>
     <javac srcdir="${src}" destdir="${classes}/tables" classpathref="lib.path" debug="true" includeantruntime="false" source="${source}" target="${target}">
@@ -89,7 +99,7 @@
   </target>
 
   <!-- Compile geo880 -->
-  <target name="geo880" depends="init,core,corenlp,tables">
+  <target name="geo880" depends="init,core,corenlp,tables,cprune">
     <echo message="Compiling ${ant.project.name}: geo880"/>
     <mkdir dir="${classes}/geo880"/>
     <javac srcdir="${src}" destdir="${classes}/geo880" classpathref="lib.path" debug="true" includeantruntime="false" source="${source}" target="${target}">
@@ -108,3 +118,4 @@
   </target>
 
 </project>
+
