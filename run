@@ -730,10 +730,16 @@ addMode('tables', 'QA on HTML tables', lambda { |e| l(
     l(o('Params.l1Reg','lazy'), o('Params.l1RegCoeff', '5e-5')),
   nil),
   # Collaborative Pruning
-  o('enableCollaborativePruning', true),
+  letDefault(:cp, 1),
+  sel(:cp,
+  l(),
+  l(
+  o('enableCollaborativePruning'),
+  o('beamSize', 100),
   o('maxNeighborRank', 100),
   o('K', 40),
-  o('maxPredictedPatterns', 40),
+  o('maxPredictedPatterns', 40)),
+  nil),
   # Features
   letDefault(:feat, 'none'),
   sel(:feat, {
@@ -744,10 +750,6 @@ addMode('tables', 'QA on HTML tables', lambda { |e| l(
     'all' => l(      # All features
       o('FeatureExtractor.featureDomains', 'custom-denotation phrase-predicate phrase-denotation headword-denotation missing-predicate'.split),
       o('FeatureExtractor.featureComputers', 'tables.features.PhrasePredicateFeatureComputer tables.features.PhraseDenotationFeatureComputer'.split),
-    nil),
-    'pattern' => l(      # All features
-      o('FeatureExtractor.featureDomains', 'custom-denotation phrase-predicate phrase-denotation headword-denotation missing-predicate phrase-pattern'.split),
-      o('FeatureExtractor.featureComputers', 'tables.features.PhrasePredicateFeatureComputer tables.features.PhraseDenotationFeatureComputer tables.features.PatternFeatureComputer'.split),
     nil),
     'baseline' => l( # For the baseline classifier
       o('FeatureExtractor.featureDomains', 'custom-denotation phrase-denotation headword-denotation table-baseline'.split),
@@ -810,8 +812,8 @@ def tablesGrammarPaths
           o('Grammar.inPaths', "#{baseDir}custom.grammar"),
           o('Grammar.tags', *'alternative movement comparison count aggregate superlative arithmetic merge v-superlative or-superlative'.split),
         nil),
-        'auto' => l(    # Use trigger words for operations
-          o('Grammar.inPaths', "#{baseDir}auto.grammar"),
+        'extended' => l(    # Use trigger words for operations
+          o('Grammar.inPaths', "#{baseDir}extended.grammar"),
           o('Grammar.tags', *'alternative movement comparison count aggregate superlative arithmetic merge v-superlative'.split),
         nil),
       }),
@@ -940,11 +942,6 @@ addMode('geo880', 'Semantic parsing on the geo880 dataset', lambda { |e| l(
   # Usual header
   header('core,tables,corenlp,geo880,cprune'),
   'edu.stanford.nlp.sempre.Main',
-  # Collaborative Pruning
-  o('enableCollaborativePruning', true),
-  o('maxNeighborRank', 50),
-  o('K', 10),
-  o('maxPredictedPatterns', 10),
   # Fig parameters
   figOpts,
   o('executor', 'tables.lambdadcs.LambdaDCSExecutor'),
