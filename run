@@ -832,7 +832,7 @@ def tablesDataPaths
         o('Dataset.inPaths',
           "train,#{baseDir}training.examples",
           "test,#{baseDir}pristine-unseen-tables.examples"),
-        o('Dataset.trainFrac', 1), o('Dataset.devFrac', 0),o('neighborFilePath', "tables/exact_nearest_neighbors.all"),
+        o('Dataset.trainFrac', 1), o('Dataset.devFrac', 0),o('neighborFilePath', "tables/nn_0/exact_nearest_neighbors.all"),
         let(:unseen, 1),
       nil),
     }
@@ -842,7 +842,7 @@ def tablesDataPaths
         o('Dataset.inPaths',
           "train,#{baseDir}random-split-seed-#{x}-train.examples",
           "dev,#{baseDir}random-split-seed-#{x}-test.examples",
-        nil),o('neighborFilePath', "tables/exact_nearest_neighbors.seed-#{x}.train"),
+        nil),o('neighborFilePath', "tables/nn_0/exact_nearest_neighbors.seed-#{x}.train"),
         let(:unseen, 1),
       nil)
     end
