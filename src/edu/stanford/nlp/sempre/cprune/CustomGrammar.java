@@ -1,13 +1,22 @@
 package edu.stanford.nlp.sempre.cprune;
 
 import java.util.*;
+
 import com.google.common.collect.Lists;
+
 import edu.stanford.nlp.sempre.*;
+import edu.stanford.nlp.sempre.cprune.CollaborativePruningComputer.Options;
 import fig.basic.LispTree;
 import fig.basic.LogInfo;
 import fig.basic.MapUtils;
+import fig.basic.Option;
 
 public class CustomGrammar extends Grammar{
+	public static class Options {
+	    @Option public boolean enableTemplateDecomposition = true;
+	}
+	public static Options opts = new Options();
+	
 	public static Set<String> baseCategories = new HashSet<String>(Arrays.asList("$Unary", "$Binary", "$Entity", "$Property"));
 	
 	ArrayList<Rule> baseRules = new ArrayList<>();
@@ -102,7 +111,7 @@ public class CustomGrammar extends Grammar{
 				deriv.customRuleStrings.addAll(child.customRuleStrings);
 			}
 			
-			if (deriv.containsCrossReference){
+			if (opts.enableTemplateDecomposition == false || deriv.containsCrossReference){
 				// If this node contains a cross reference
 				if (deriv.isRootCat()){
 					// If this is the root node, then generate a custom rule
@@ -110,8 +119,9 @@ public class CustomGrammar extends Grammar{
 				}
 			}
 			else{
-				if (!deriv.cat.startsWith("$Intermediate")){
-					// If it is not an intermediate node, generate a custom rule
+				if (!deriv.cat.startsWith("$Intermediate")) // Not an IdentityFn node
+				{					
+					// Generate a custom rule for this node
 					deriv.customRuleStrings.add(getCustomRuleString(deriv));
 					
 					// Propagate this derivation as a category to the parent
@@ -142,8 +152,6 @@ public class CustomGrammar extends Grammar{
 				formula = "(IdentityFn)";
 			}
 			else{
-//				formula = formula.replace(symbol.formula + ")", "(var s" + index + "))");
-//				formula = formula.replace(symbol.formula + " ", "(var s" + index + ") ");
 				formula = safeReplace(formula, symbol.formula, "(var s" + index + ")");
 				formula = "(lambda s" + index + " " + formula + ")";
 			}
@@ -179,8 +187,6 @@ public class CustomGrammar extends Grammar{
 		String formula = deriv.formula.toString();
 		for(Symbol symbol : deriv.treeSymbols.values()){
 			if (formula.equals(symbol.formula)) formula = symbol.category;
-//			formula = formula.replace(symbol.formula + " ", symbol.category + " ");
-//			formula = formula.replace(symbol.formula + ")", symbol.category + ")");
 			formula = safeReplace(formula, symbol.formula, symbol.category);
 		}
 		return formula;
@@ -199,8 +205,6 @@ public class CustomGrammar extends Grammar{
 		Collections.sort(symbolList);
 		for(Symbol symbol : symbolList){
 			if (formula.equals(symbol.formula)) formula = symbol.category + "#" + index;
-//			formula = formula.replace(symbol.formula + " ", symbol.category + "#" + index + " ");
-//			formula = formula.replace(symbol.formula + ")", symbol.category + "#" + index +")");
 			formula = safeReplace(formula, symbol.formula, symbol.category + "#" + index);
 			index += 1;
 		}

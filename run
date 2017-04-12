@@ -779,7 +779,7 @@ addMode('tables', 'QA on HTML tables', lambda { |e| l(
   o('beamSize', 100),
   o('maxNeighborRank', 100),
   o('K', 40),
-  o('maxPredictedPatterns', 40)),
+  o('maxPredictedPatterns', 1000)),
   nil),
 nil) })
 
