@@ -17,14 +17,16 @@ public class Symbol implements Comparable<Symbol>{
 		if (index < 0){
 			index = Integer.MAX_VALUE;
 		}
-//		if (formula.equals("(number 1)")){
-//			referenceString = referenceString.replace(" (number 1) (number 1)", "                      ");
-//		}
-//		Integer index1 = referenceString.indexOf(formula + ")");
-//		Integer index2 = referenceString.indexOf(formula + " ");
-//		index1 = (index1 < 0) ? Integer.MAX_VALUE : index1;
-//		index2 = (index2 < 0) ? Integer.MAX_VALUE : index2;
-//		index = Math.min(index1, index2);
+		/*
+		if (formula.equals("(number 1)")){
+			referenceString = referenceString.replace(" (number 1) (number 1)", "                      ");
+		}
+		Integer index1 = referenceString.indexOf(formula + ")");
+		Integer index2 = referenceString.indexOf(formula + " ");
+		index1 = (index1 < 0) ? Integer.MAX_VALUE : index1;
+		index2 = (index2 < 0) ? Integer.MAX_VALUE : index2;
+		index = Math.min(index1, index2);
+		*/
 	}
 	
 	@Override
