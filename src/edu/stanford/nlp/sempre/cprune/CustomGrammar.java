@@ -26,9 +26,9 @@ public class CustomGrammar extends Grammar{
 	}
 	
 	public static String safeReplace(String formula, String target, String replacement){
-//		formula = formula.replace(target + ")", replacement + ")");
-//		formula = formula.replace(target + " ", replacement + " ");
-		if (target.equals("(number 1)")){
+		formula = formula.replace(target + ")", replacement + ")");
+		formula = formula.replace(target + " ", replacement + " ");
+		/*if (target.equals("(number 1)")){
 			formula = formula.replace(" (number 1) (number 1)", " @DoubleNumberOnes");
 			formula = formula.replace(target + ")", replacement + ")");
 			formula = formula.replace(target + " ", replacement + " ");
@@ -37,7 +37,7 @@ public class CustomGrammar extends Grammar{
 		else{
 			formula = formula.replace(target + ")", replacement + ")");
 			formula = formula.replace(target + " ", replacement + " ");
-		}
+		}*/
 		return formula;
 	}
 	
