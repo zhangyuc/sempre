@@ -119,7 +119,7 @@ public class CustomGrammar extends Grammar{
 				}
 			}
 			else{
-				if (!deriv.cat.startsWith("$Intermediate")) // Not an IdentityFn node
+				if (!deriv.cat.startsWith("$Intermediate"))
 				{					
 					// Generate a custom rule for this node
 					deriv.customRuleStrings.add(getCustomRuleString(deriv));
