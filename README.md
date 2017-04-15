@@ -1,5 +1,3 @@
-This code reproduces results of the paper "Inducing Macro Grammars for Efficient Semantic Parsing"
-
 Running the code
 ----------------
 
