@@ -34,6 +34,10 @@ public class PhrasePredicateFeatureComputer implements FeatureComputer {
     public boolean lexicalizedPhrasePredicate = true;
     @Option(gloss = "Maximum ngram length for lexicalize all pair features")
     public int maxNforLexicalizeAllPairs = Integer.MAX_VALUE;
+    @Option(gloss = "phrase-category: Weight threshold")
+    public double phraseCategoryWeightThreshold = 0.8;
+    @Option(gloss = "phrase-category: Use binary features instead of continuous ones")
+    public boolean phraseCategoryBinary = true;
   }
   public static Options opts = new Options();
 
@@ -47,7 +51,8 @@ public class PhrasePredicateFeatureComputer implements FeatureComputer {
   public void extractLocal(Example ex, Derivation deriv) {
     if (!(FeatureExtractor.containsDomain("phrase-predicate")
           || FeatureExtractor.containsDomain("missing-predicate")
-          || FeatureExtractor.containsDomain("phrase-formula"))) return;
+          || FeatureExtractor.containsDomain("phrase-formula")
+          || FeatureExtractor.containsDomain("phrase-category"))) return;
     // Only compute features at the root, except when the partial option is set.
     if (!opts.defineOnPartialDerivs && !deriv.isRoot(ex.numTokens())) return;
     List<PhraseInfo> phraseInfos = PhraseInfo.getPhraseInfos(ex);
@@ -58,7 +63,8 @@ public class PhrasePredicateFeatureComputer implements FeatureComputer {
       LogInfo.logs("Derivation: %s", deriv);
       LogInfo.logs("Predicates: %s", predicateInfos);
     }
-    if (FeatureExtractor.containsDomain("phrase-predicate")) {
+    if (FeatureExtractor.containsDomain("phrase-predicate")
+        || FeatureExtractor.containsDomain("phrase-category")) {
       if (opts.defineOnPartialDerivs) {
         deriv.getTempState().put("p-p", new ArrayList<>(predicateInfos));
         // Subtract predicates from children
@@ -120,7 +126,7 @@ public class PhrasePredicateFeatureComputer implements FeatureComputer {
   private void extractMatch(Example ex, Derivation deriv,
       PhraseInfo phraseInfo, String phraseString, String phraseType,
       PredicateInfo predicateInfo, String predicateString, String predicateType, double factor) {
-    if (opts.unlexicalizedPhrasePredicate) {
+    if (FeatureExtractor.containsDomain("phrase-predicate") && opts.unlexicalizedPhrasePredicate) {
       if (phraseString.equals(predicateString)) {
         defineFeatures(ex, deriv, phraseInfo, predicateInfo, phraseType + "=" + predicateType,
             phraseString, predicateString, factor);
@@ -143,9 +149,24 @@ public class PhrasePredicateFeatureComputer implements FeatureComputer {
         }
       }
     }
-    if (opts.lexicalizedPhrasePredicate && phraseInfo.end - phraseInfo.start <= maxNforLexicalizeAllPairs) {
+    if (FeatureExtractor.containsDomain("phrase-predicate") && opts.lexicalizedPhrasePredicate
+        && phraseInfo.end - phraseInfo.start <= maxNforLexicalizeAllPairs) {
       deriv.addFeature("p-p",
           phraseType + phraseString + ";" + predicateType + predicateString, factor);
+    }
+    if (FeatureExtractor.containsDomain("phrase-category") && predicateInfo.type == PredicateType.BINARY) {
+      ColumnCategoryInfo catInfo = ColumnCategoryInfo.getSingleton();
+      List<Pair<String, Double>> categories = catInfo.get(ex, predicateInfo.predicate);
+      if (categories != null) {
+        for (Pair<String, Double> pair : categories) {
+          if (pair.getSecond() >= opts.phraseCategoryWeightThreshold) {
+            if (opts.phraseCategoryBinary)
+              deriv.addFeature("p-c", phraseType + phraseString + ";" + pair.getFirst());
+            else
+              deriv.addFeature("p-c", phraseType + phraseString + ";" + pair.getFirst(), pair.getSecond());
+          }
+        }
+      }
     }
   }
 

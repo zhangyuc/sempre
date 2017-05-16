@@ -157,7 +157,7 @@ public class TableKnowledgeGraph extends KnowledgeGraph {
 
   List<TableRow> rows;
   public List<TableColumn> columns;
-  String filename;
+  public final String filename;
 
   Map<String, TableRow> rowNameToTableRow;
   Map<String, TableColumn> columnNameToTableColumn;
@@ -578,6 +578,15 @@ public class TableKnowledgeGraph extends KnowledgeGraph {
         answer.add(i);
     }
     return answer;
+  }
+
+  public int getColumnIndex(String nameValueId) {
+    if (nameValueId.startsWith("!"))
+      nameValueId = nameValueId.substring(1);
+    for (int j = 0; j < columns.size(); j++) {
+      if (columns.get(j).propertyNameValue.id.equals(nameValueId)) return j;
+    }
+    return -1;
   }
 
   // ============================================================
