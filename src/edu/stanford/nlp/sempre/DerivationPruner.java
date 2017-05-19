@@ -53,12 +53,12 @@ public class DerivationPruner {
          (customAllowedDomains == null || customAllowedDomains.contains(name));
   }
 
-  public boolean isPruned(Example ex, Derivation deriv) {
+  public boolean isPruned(Derivation deriv) {
     if (opts.pruningStrategies.isEmpty() && pruningComputers.isEmpty()) return false;
     if (pruneFormula(deriv)) return true;
     if (pruneDenotation(deriv)) return true;
     for (DerivationPruningComputer pruningComputer : pruningComputers) {
-      if (pruningComputer.isPruned(ex, deriv)) return true;
+      if (pruningComputer.isPruned(deriv)) return true;
     }
     return false;
   }

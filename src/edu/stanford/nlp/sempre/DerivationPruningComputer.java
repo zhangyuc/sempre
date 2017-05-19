@@ -20,6 +20,6 @@ public abstract class DerivationPruningComputer {
     return pruner.containsStrategy(name);
   }
 
-  public abstract boolean isPruned(Example ex, Derivation deriv);
+  public abstract boolean isPruned(Derivation deriv);
 
 }

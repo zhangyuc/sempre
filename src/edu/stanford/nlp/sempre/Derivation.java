@@ -2,7 +2,6 @@ package edu.stanford.nlp.sempre;
 
 import fig.basic.*;
 import edu.stanford.nlp.sempre.cprune.Symbol;
-import edu.stanford.nlp.sempre.tables.features.*;
 import java.util.*;
 
 /**
@@ -59,7 +58,7 @@ public class Derivation implements SemanticFn.Callable, HasScore {
   public Map<String, Symbol> ruleSymbols;
   public List<String> customRuleStrings;
   public boolean containsCrossReference;
-  
+
   //// Fields produced by feature extractor, evaluation, etc.
 
   private List<String> localChoices;  // Just for printing/debugging.
