@@ -1,7 +1,6 @@
 package edu.stanford.nlp.sempre.tables;
 
 import edu.stanford.nlp.sempre.*;
-import edu.stanford.nlp.sempre.tables.features.*;
 import fig.basic.LogInfo;
 
 public class TableDerivationPruningComputer extends DerivationPruningComputer {
@@ -11,8 +10,8 @@ public class TableDerivationPruningComputer extends DerivationPruningComputer {
   }
 
   @Override
-  public boolean isPruned(Example ex, Derivation deriv) {
-	  return pruneJoins(deriv);
+  public boolean isPruned(Derivation deriv) {
+    return pruneJoins(deriv);
   }
 
   /**

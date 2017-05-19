@@ -7,7 +7,7 @@ import java.io.PrintWriter;
 import java.util.*;
 
 import static fig.basic.LogInfo.logs;
-import edu.stanford.nlp.sempre.cprune.*; 
+import edu.stanford.nlp.sempre.cprune.*;
 
 /**
  * A FloatingParser builds Derivations according to a Grammar without having to
@@ -98,17 +98,17 @@ class FloatingParserState extends ParserState {
 
   @Override
   protected int getBeamSize() {
-    if (CollaborativePruningComputer.opts.enableCollaborativePruning && 
-  	CollaborativePruningComputer.mode == CollaborativePruningComputer.Mode.EXPLOIT && 
-  	FloatingParser.opts.exploitBeamSize > 0){
-    	return FloatingParser.opts.exploitBeamSize;
+    if (CollaborativePruningComputer.opts.enableCollaborativePruning &&
+    CollaborativePruningComputer.mode == CollaborativePruningComputer.Mode.EXPLOIT &&
+    FloatingParser.opts.exploitBeamSize > 0){
+      return FloatingParser.opts.exploitBeamSize;
     }
     if (computeExpectedCounts && FloatingParser.opts.trainBeamSize > 0){
-      	return FloatingParser.opts.trainBeamSize;
+        return FloatingParser.opts.trainBeamSize;
     }
     return Parser.opts.beamSize;
   }
-  
+
   // Construct state names.
   private Object floatingCell(String cat, int depth) {
     return cat + ":" + depth;
@@ -119,17 +119,14 @@ class FloatingParserState extends ParserState {
   private Object cell(String cat, int start, int end, int depth) {
     return (start != -1) ? anchoredCell(cat, start, end) : floatingCell(cat, depth);
   }
-  
+
   private void addToChart(Object cell, Derivation deriv) {
-	  if (!deriv.isFeaturizedAndScored()){
-		  featurizeAndScoreDerivation(deriv);
-	  }
-    
-      if (Parser.opts.pruneErrorValues && deriv.value instanceof ErrorValue) return;
-      if (Parser.opts.verbose >= 4)
+    if (!deriv.isFeaturizedAndScored())  // A derivation could be belong in multiple cells.
+      featurizeAndScoreDerivation(deriv);
+    if (Parser.opts.pruneErrorValues && deriv.value instanceof ErrorValue) return;
+    if (Parser.opts.verbose >= 4)
       LogInfo.logs("addToChart %s: %s", cell, deriv);
-    
-      MapUtils.addToList(chart, cell, deriv);
+    MapUtils.addToList(chart, cell, deriv);
   }
 
   private void applyRule(Rule rule, int start, int end, int depth, Derivation child1, Derivation child2, String canonicalUtterance) {
@@ -153,26 +150,25 @@ class FloatingParserState extends ParserState {
         if (child.rule.equals(rule)) return;
       }
     }
-    
+
     DerivationStream results = rule.sem.call(ex,
             new SemanticFn.CallInfo(rule.lhs, start, end, rule, children));
     while (results.hasNext()) {
-      Derivation newDeriv = results.next();      
+      Derivation newDeriv = results.next();
       newDeriv.canonicalUtterance = canonicalUtterance;
 
       // make sure we execute
       if (FloatingParser.opts.executeAllDerivations && !(newDeriv.type instanceof FuncSemType))
         newDeriv.ensureExecuted(parser.executor, ex.context);
-      
-      if (pruner.isPruned(ex, newDeriv)) continue;
-      
+
+      if (pruner.isPruned(newDeriv)) continue;
       // Avoid repetitive floating cells
       addToChart(cell(rule.lhs, start, end, depth), newDeriv);
       if (depth == -1)  // In addition, anchored cells become floating at level 0
         addToChart(floatingCell(rule.lhs, 0), newDeriv);
-      
+
       if (CollaborativePruningComputer.opts.enableCollaborativePruning && computeExpectedCounts){
-    	  CollaborativePruningComputer.updateConsistentPattern(parser.valueEvaluator, ex, newDeriv);
+        CollaborativePruningComputer.updateConsistentPattern(parser.valueEvaluator, ex, newDeriv);
       }
     }
   }
@@ -324,65 +320,65 @@ class FloatingParserState extends ParserState {
     if (myDerivations != null)
       derivations.addAll(myDerivations);
   }
-  
+
   @Override
   public void buildDerivations() {
-	 chart.clear();
-     // Base case ($TOKEN, $PHRASE)
-     for (Derivation deriv : gatherTokenAndPhraseDerivations()) {
-         addToChart(anchoredCell(deriv.cat, deriv.start, deriv.end), deriv);
-         addToChart(floatingCell(deriv.cat, 0), deriv);
-     }
-    
-	 Set<String> categories = new HashSet<>();
-     for (Rule rule : rules)
-       categories.add(rule.lhs);
-     
-	 // Build up anchored derivations (like the BeamParser)
-     int numTokens = ex.numTokens();
-     for (int len = 1; len <= numTokens; len++) {
-       for (int i = 0; i + len <= numTokens; i++)  {
-         buildAnchored(i, i + len);
-         for (String cat : categories) {
-           String cell = anchoredCell(cat, i, i + len).toString();
-           pruneCell(cell, chart.get(cell));
-         }
-       }
-     }
-     
+    chart.clear();
+    // Base case ($TOKEN, $PHRASE)
+    for (Derivation deriv : gatherTokenAndPhraseDerivations()) {
+      addToChart(anchoredCell(deriv.cat, deriv.start, deriv.end), deriv);
+      addToChart(floatingCell(deriv.cat, 0), deriv);
+    }
+
+    Set<String> categories = new HashSet<>();
+    for (Rule rule : rules)
+      categories.add(rule.lhs);
+
+    // Build up anchored derivations (like the BeamParser)
+    int numTokens = ex.numTokens();
+    for (int len = 1; len <= numTokens; len++) {
+      for (int i = 0; i + len <= numTokens; i++)  {
+        buildAnchored(i, i + len);
+        for (String cat : categories) {
+          String cell = anchoredCell(cat, i, i + len).toString();
+          pruneCell(cell, chart.get(cell));
+        }
+      }
+    }
+
     // Build up floating derivations
-    for (int depth = 1; depth <= FloatingParser.opts.maxDepth; depth++) {      
+    for (int depth = 1; depth <= FloatingParser.opts.maxDepth; depth++) {
       buildFloating(depth);
       for (String cat : categories) {
         String cell = floatingCell(cat, depth).toString();
         pruneCell(cell, chart.get(cell));
       }
-      
-      if (CollaborativePruningComputer.opts.enableCollaborativePruning && 
-    		  CollaborativePruningComputer.mode == CollaborativePruningComputer.Mode.EXPLORE){
-	  	  if(CollaborativePruningComputer.foundConsistentDerivation){
-	  		  LogInfo.log("Exploration succeeds at depth = " + depth);
-	  		  return;
-	  	  }
-	  	  if(numOfFeaturizedDerivs > CollaborativePruningComputer.opts.maxDerivations){
-	  		LogInfo.log("Exploration fails at depth = " + depth);
-	  		  return;
-	  	  }
-	  }
+
+      if (CollaborativePruningComputer.opts.enableCollaborativePruning &&
+          CollaborativePruningComputer.mode == CollaborativePruningComputer.Mode.EXPLORE){
+        if(CollaborativePruningComputer.foundConsistentDerivation){
+          LogInfo.log("Exploration succeeds at depth = " + depth);
+          return;
+        }
+        if(numOfFeaturizedDerivs > CollaborativePruningComputer.opts.maxDerivations){
+        LogInfo.log("Exploration fails at depth = " + depth);
+          return;
+        }
+    }
     }
   }
-  
+
   @Override public void infer() {
     LogInfo.begin_track("FloatingParser.infer()");
-    
+
     boolean exploitSucceeds = true;
     if (CollaborativePruningComputer.opts.enableCollaborativePruning){
         exploitSucceeds = exploit();
     }
     else{
-    	rules = parser.grammar.rules;
-    	catUnaryRules = parser.getCatUnaryRules();
-    	buildDerivations();
+      rules = parser.grammar.rules;
+      catUnaryRules = parser.getCatUnaryRules();
+      buildDerivations();
     }
 
     // Collect final predicted derivations
@@ -418,22 +414,22 @@ class FloatingParserState extends ParserState {
       writer.close();
       fWriter.close();
     }
-    
+
     LogInfo.end_track();
-    
+
     if (CollaborativePruningComputer.opts.enableCollaborativePruning){
-	    LogInfo.begin_track("Summary of Collaborative Pruning");
-	    LogInfo.logs("Exploit succeeds: " + exploitSucceeds);
-	    LogInfo.logs("Exploit success rate: " + CollaborativePruningComputer.stats.successfulExploit + "/" + CollaborativePruningComputer.stats.totalExploit);
-	    
-	    // Explore only on the training dataset
-	    if (CollaborativePruningComputer.stats.iter.equals("0.train") && computeExpectedCounts && 
-	    		!exploitSucceeds && (CollaborativePruningComputer.stats.totalExplore <= CollaborativePruningComputer.opts.maxExplorationIters)){
-	    	explore();
-	        LogInfo.logs("Consistent pattern: " + CollaborativePruningComputer.getConsistentPattern(ex));
-	        LogInfo.logs("Explore success rate: " + CollaborativePruningComputer.stats.successfulExplore + "/" + CollaborativePruningComputer.stats.totalExplore);
-	    }
-	    LogInfo.end_track();
+      LogInfo.begin_track("Summary of Collaborative Pruning");
+      LogInfo.logs("Exploit succeeds: " + exploitSucceeds);
+      LogInfo.logs("Exploit success rate: " + CollaborativePruningComputer.stats.successfulExploit + "/" + CollaborativePruningComputer.stats.totalExploit);
+
+      // Explore only on the training dataset
+      if (CollaborativePruningComputer.stats.iter.equals("0.train") && computeExpectedCounts &&
+          !exploitSucceeds && (CollaborativePruningComputer.stats.totalExplore <= CollaborativePruningComputer.opts.maxExplorationIters)){
+        explore();
+          LogInfo.logs("Consistent pattern: " + CollaborativePruningComputer.getConsistentPattern(ex));
+          LogInfo.logs("Explore success rate: " + CollaborativePruningComputer.stats.successfulExplore + "/" + CollaborativePruningComputer.stats.totalExplore);
+      }
+      LogInfo.end_track();
     }
   }
 

@@ -317,7 +317,7 @@ class DPParserState extends ParserState {
         new SemanticFn.CallInfo(rule.lhs, start, end, rule, children));
     while (results.hasNext()) {
       Derivation newDeriv = results.next();
-      if (pruner.isPruned(ex, newDeriv)) continue;
+      if (pruner.isPruned(newDeriv)) continue;
       if (depth == -1) {
         // Anchored rule
         addToChart(anchoredCell(rule.lhs, start, end), newDeriv, ingredient, bp1, bp2);

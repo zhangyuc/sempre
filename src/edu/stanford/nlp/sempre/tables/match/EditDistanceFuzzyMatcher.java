@@ -61,39 +61,39 @@ public class EditDistanceFuzzyMatcher extends FuzzyMatcher {
 
   protected void precompute() {
     // entity
-	for (TableColumn column : graph.columns) {
-		// unary and binary
-		Formula unary = new JoinFormula(
-		      new ValueFormula<>(KnowledgeGraph.getReversedPredicate(column.propertyNameValue)),
-		      new JoinFormula(new ValueFormula<>(new NameValue(CanonicalNames.TYPE)),
-		                      new ValueFormula<>(new NameValue(TableTypeSystem.ROW_TYPE)))
-		);
-		Formula binary = new ValueFormula<>(column.propertyNameValue);
-		allUnaryFormulas.add(unary);
-		allBinaryFormulas.add(binary);
-		for (String s : getAllCollapsedForms(column.originalString)) {
-		    MapUtils.addToSet(phraseToUnaryFormulas, s, unary);
-		    MapUtils.addToSet(phraseToBinaryFormulas, s, binary);
-		}
-//		if (opts.fuzzyMatchSubstring) {
-//	      for (String s : getAllSubstringCollapsedForms(column.originalString)) {
-//	    	MapUtils.addToSet(substringToEntityFormulas, s, unary);
-//	        MapUtils.addToSet(substringToEntityFormulas, s, binary);
-//	      }
-//		}
-		  
-		for (TableCell cell : column.children) {
-	        Formula entity = new ValueFormula<>(cell.properties.entityNameValue);
-	        allEntityFormulas.add(entity);
-	        for (String s : getAllCollapsedForms(cell.properties.originalString))
-	          MapUtils.addToSet(phraseToEntityFormulas, s, entity);
-	        if (opts.fuzzyMatchSubstring) {
-	          for (String s : getAllSubstringCollapsedForms(cell.properties.originalString)) {
-	            MapUtils.addToSet(substringToEntityFormulas, s, entity);
-	          }
-	        }
-		}
-	}
+  for (TableColumn column : graph.columns) {
+    // unary and binary
+    Formula unary = new JoinFormula(
+          new ValueFormula<>(KnowledgeGraph.getReversedPredicate(column.propertyNameValue)),
+          new JoinFormula(new ValueFormula<>(new NameValue(CanonicalNames.TYPE)),
+                          new ValueFormula<>(new NameValue(TableTypeSystem.ROW_TYPE)))
+    );
+    Formula binary = new ValueFormula<>(column.propertyNameValue);
+    allUnaryFormulas.add(unary);
+    allBinaryFormulas.add(binary);
+    for (String s : getAllCollapsedForms(column.originalString)) {
+        MapUtils.addToSet(phraseToUnaryFormulas, s, unary);
+        MapUtils.addToSet(phraseToBinaryFormulas, s, binary);
+    }
+//    if (opts.fuzzyMatchSubstring) {
+//        for (String s : getAllSubstringCollapsedForms(column.originalString)) {
+//        MapUtils.addToSet(substringToEntityFormulas, s, unary);
+//          MapUtils.addToSet(substringToEntityFormulas, s, binary);
+//        }
+//    }
+
+    for (TableCell cell : column.children) {
+          Formula entity = new ValueFormula<>(cell.properties.entityNameValue);
+          allEntityFormulas.add(entity);
+          for (String s : getAllCollapsedForms(cell.properties.originalString))
+            MapUtils.addToSet(phraseToEntityFormulas, s, entity);
+          if (opts.fuzzyMatchSubstring) {
+            for (String s : getAllSubstringCollapsedForms(cell.properties.originalString)) {
+              MapUtils.addToSet(substringToEntityFormulas, s, entity);
+            }
+          }
+    }
+  }
     // debug print
     if (opts.verbose >= 5) {
       debugPrint("phrase Entity", phraseToEntityFormulas);

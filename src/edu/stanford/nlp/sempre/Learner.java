@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import edu.stanford.nlp.sempre.cprune.*; 
+import edu.stanford.nlp.sempre.cprune.*;
 
 /**
  * The main learning loop.  Goes over a dataset multiple times, calling the
@@ -107,12 +107,12 @@ public class Learner {
 
       // Test and train
       if (CollaborativePruningComputer.opts.enableCollaborativePruning){
-    	  CollaborativePruningComputer.customGrammar.init(parser.grammar);
-    	  CollaborativePruningComputer.loadNeighbors();
+        CollaborativePruningComputer.customGrammar.init(parser.grammar);
+        CollaborativePruningComputer.loadNeighbors();
       }
       for (String group : dataset.groups()) {
-    	CollaborativePruningComputer.stats.reset(iter + "." + group);
-    	
+        CollaborativePruningComputer.stats.reset(iter + "." + group);
+
         boolean lastIter = (iter == numIters);
         boolean updateWeights = opts.updateWeights && group.equals("train") && !lastIter;  // Don't train on last iteration
         Evaluation eval = processExamples(

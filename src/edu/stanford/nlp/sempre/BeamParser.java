@@ -72,7 +72,7 @@ class BeamParserState extends ChartParserState {
 
   private final BeamParser parser;
   private final BeamParserState coarseState;  // Used to prune
-  
+
   public BeamParserState(BeamParser parser, Params params, Example ex, boolean computeExpectedCounts,
                          Mode mode, BeamParserState coarseState) {
     super(parser, params, ex, computeExpectedCounts);
@@ -89,8 +89,8 @@ class BeamParserState extends ChartParserState {
 
     // Base case
     for (Derivation deriv : gatherTokenAndPhraseDerivations()) {
-        featurizeAndScoreDerivation(deriv);
-        addToChart(deriv);
+      featurizeAndScoreDerivation(deriv);
+      addToChart(deriv);
     }
 
     // Recursive case
@@ -99,9 +99,9 @@ class BeamParserState extends ChartParserState {
         exploitSucceeds = exploit();
     }
     else{
-    	rules = parser.grammar.rules;
-    	catUnaryRules = parser.getCatUnaryRules();
-    	buildDerivations();
+      rules = parser.grammar.rules;
+      catUnaryRules = parser.getCatUnaryRules();
+      buildDerivations();
     }
 
     if (parser.verbose(2)) LogInfo.end_track();
@@ -123,53 +123,53 @@ class BeamParserState extends ChartParserState {
         ParserState.computeExpectedCounts(predDerivations, expectedCounts);
       }
     }
-    
+
     if (CollaborativePruningComputer.opts.enableCollaborativePruning){
-	    LogInfo.begin_track("Summary of Collaborative Pruning");
-	    LogInfo.logs("Exploit succeeds: " + exploitSucceeds);
-	    LogInfo.logs("Exploit success rate: " + CollaborativePruningComputer.stats.successfulExploit + "/" + CollaborativePruningComputer.stats.totalExploit);
-	    
-	    // Explore only on the training dataset
-	    if (CollaborativePruningComputer.stats.iter.equals("0.train") && computeExpectedCounts && 
-	    		!exploitSucceeds && (CollaborativePruningComputer.stats.totalExplore <= CollaborativePruningComputer.opts.maxExplorationIters)){
-	    	explore();
-	        LogInfo.logs("Consistent pattern: " + CollaborativePruningComputer.getConsistentPattern(ex));
-	        LogInfo.logs("Explore success rate: " + CollaborativePruningComputer.stats.successfulExplore + "/" + CollaborativePruningComputer.stats.totalExplore);
-	    }
-	    LogInfo.end_track();
+      LogInfo.begin_track("Summary of Collaborative Pruning");
+      LogInfo.logs("Exploit succeeds: " + exploitSucceeds);
+      LogInfo.logs("Exploit success rate: " + CollaborativePruningComputer.stats.successfulExploit + "/" + CollaborativePruningComputer.stats.totalExploit);
+
+      // Explore only on the training dataset
+      if (CollaborativePruningComputer.stats.iter.equals("0.train") && computeExpectedCounts &&
+          !exploitSucceeds && (CollaborativePruningComputer.stats.totalExplore <= CollaborativePruningComputer.opts.maxExplorationIters)){
+        explore();
+          LogInfo.logs("Consistent pattern: " + CollaborativePruningComputer.getConsistentPattern(ex));
+          LogInfo.logs("Explore success rate: " + CollaborativePruningComputer.stats.successfulExplore + "/" + CollaborativePruningComputer.stats.totalExplore);
+      }
+      LogInfo.end_track();
     }
   }
-  
+
   @Override
   public void buildDerivations(){
-	  for (int len = 1; len <= numTokens; len++){
-	      for (int i = 0; i + len <= numTokens; i++){
-		      build(i, i + len);
-		        
-		      if (CollaborativePruningComputer.opts.enableCollaborativePruning && 
-		    		  CollaborativePruningComputer.mode == CollaborativePruningComputer.Mode.EXPLORE){
-			  	  if(CollaborativePruningComputer.foundConsistentDerivation){
-			  		  LogInfo.log("Exploration succeeds at length = " + len);
-			  		  return;
-			  	  }
-			  	  if(numOfFeaturizedDerivs > CollaborativePruningComputer.opts.maxDerivations){
-			  		LogInfo.log("Exploration fails at length = " + len);
-			  		  return;
-			  	  }
-			  }	      
-		  }
-	  }
+    for (int len = 1; len <= numTokens; len++){
+        for (int i = 0; i + len <= numTokens; i++){
+          build(i, i + len);
+
+          if (CollaborativePruningComputer.opts.enableCollaborativePruning &&
+              CollaborativePruningComputer.mode == CollaborativePruningComputer.Mode.EXPLORE){
+            if(CollaborativePruningComputer.foundConsistentDerivation){
+              LogInfo.log("Exploration succeeds at length = " + len);
+              return;
+            }
+            if(numOfFeaturizedDerivs > CollaborativePruningComputer.opts.maxDerivations){
+            LogInfo.log("Exploration fails at length = " + len);
+              return;
+            }
+        }
+      }
+    }
   }
 
   // Create all the derivations for the span [start, end).
   protected void build(int start, int end) {
     Trie trie;  // For non-cat-unary rules
-    
+
     // Index the non-cat-unary rules
     trie = new Trie();
     for (Rule rule : rules){
-    	if (!rule.isCatUnary())
-  	      trie.add(rule);
+      if (!rule.isCatUnary())
+          trie.add(rule);
     }
     applyNonCatUnaryRules(start, end, start, trie, new ArrayList<Derivation>(), new IntRef(0));
 
@@ -186,9 +186,9 @@ class BeamParserState extends ChartParserState {
 
   // Return number of new derivations added
   private int applyRule(int start, int end, Rule rule, List<Derivation> children) {
-	Derivation child1 = children.size() >=1 ? children.get(0) : null;
-	Derivation child2 = children.size() >=2 ? children.get(1) : null;
-	  
+  Derivation child1 = children.size() >=1 ? children.get(0) : null;
+  Derivation child2 = children.size() >=2 ? children.get(1) : null;
+
     if (Parser.opts.verbose >= 5) LogInfo.logs("applyRule %s %s %s %s", start, end, rule, children);
     try {
       if (mode == Mode.full) {
@@ -198,12 +198,12 @@ class BeamParserState extends ChartParserState {
         StopWatchSet.end();
         while (results.hasNext()) {
           Derivation newDeriv = results.next();
-          
+
           featurizeAndScoreDerivation(newDeriv);
           addToChart(newDeriv);
-          
+
           if (CollaborativePruningComputer.opts.enableCollaborativePruning && computeExpectedCounts){
-        	  CollaborativePruningComputer.updateConsistentPattern(parser.valueEvaluator, ex, newDeriv);
+            CollaborativePruningComputer.updateConsistentPattern(parser.valueEvaluator, ex, newDeriv);
           }
         }
         return results.estimatedSize();

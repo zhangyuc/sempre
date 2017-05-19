@@ -19,13 +19,13 @@ public class OvernightDerivationPruningComputer extends DerivationPruningCompute
   }
   public static Options opts = new Options();
 
-  
+
   public OvernightDerivationPruningComputer(DerivationPruner pruner) {
     super(pruner);
   }
 
   @Override
-  public boolean isPruned(Example ex, Derivation deriv) {
+  public boolean isPruned(Derivation deriv) {
     if (opts.applyHardConstraints && violateHardConstraints(deriv)) return true;
     return false;
   }

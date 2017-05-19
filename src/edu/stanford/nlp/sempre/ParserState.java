@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import edu.stanford.nlp.sempre.cprune.*; 
+import edu.stanford.nlp.sempre.cprune.*;
 import edu.stanford.nlp.sempre.cprune.CollaborativePruningComputer.Mode;
 
 /**
@@ -65,49 +65,36 @@ public abstract class ParserState {
     this.numTokens = ex.numTokens();
   }
 
-  protected int getBeamSize(){
-	  return Parser.opts.beamSize; 
-  }
+  protected int getBeamSize() { return Parser.opts.beamSize; }
 
   // Main entry point.  Should set all the output variables.
   public abstract void infer();
-  
+
   protected void recursiveFeaturizeAndScoreDerivation(Derivation deriv) {
-	  for (Derivation child: deriv.children){
-		  recursiveFeaturizeAndScoreDerivation(child);
-	  }
-	  parser.extractor.extractLocal(ex, deriv);
-	  deriv.computeScoreLocal(params);
-  }
-  
-  protected void featurizeAndScoreDerivation(Derivation deriv) {
-    if (deriv.isFeaturizedAndScored()) {
-	    LogInfo.warnings("Derivation already featurized: %s", deriv);
-	    return;
-	}
-	  
-//	if (CollaborativePruningComputer.opts.enableCollaborativePruning && 
-//			CollaborativePruningComputer.mode == Mode.EXPLORE){
-//		if (deriv.isRootCat() && parser.valueEvaluator.getCompatibility(ex.targetValue, deriv.value) == 1){
-//            recursiveFeaturizeAndScoreDerivation(deriv);
-//		}
-//		else{
-//			deriv.computeScoreLocal(params);
-//		}
-//	}
-//	else{
-//	    parser.extractor.extractLocal(ex, deriv);
-//        deriv.computeScoreLocal(params);
-//	}
-	
+    for (Derivation child: deriv.children){
+      recursiveFeaturizeAndScoreDerivation(child);
+    }
     parser.extractor.extractLocal(ex, deriv);
     deriv.computeScoreLocal(params);
-           
-	if (parser.verbose(5)) {
-	    LogInfo.logs("featurizeAndScoreDerivation(score=%s) %s %s: %s [rule: %s]",
-	                Fmt.D(deriv.score), deriv.cat, ex.spanString(deriv.start, deriv.end), deriv, deriv.rule);
-	}
-	numOfFeaturizedDerivs++;
+  }
+
+  protected void featurizeAndScoreDerivation(Derivation deriv) {
+    if (deriv.isFeaturizedAndScored()) {
+      LogInfo.warnings("Derivation already featurized: %s", deriv);
+      return;
+    }
+
+    // Compute features
+    parser.extractor.extractLocal(ex, deriv);
+
+    // Compute score
+    deriv.computeScoreLocal(params);
+
+    if (parser.verbose(5)) {
+      LogInfo.logs("featurizeAndScoreDerivation(score=%s) %s %s: %s [rule: %s]",
+              Fmt.D(deriv.score), deriv.cat, ex.spanString(deriv.start, deriv.end), deriv, deriv.rule);
+    }
+    numOfFeaturizedDerivs++;
   }
 
   /**
@@ -376,36 +363,36 @@ public abstract class ParserState {
     }
     return (chosenGood == -1 || chosenBad == -1) ? null : new int[] {chosenGood, chosenBad};
   }
-  
+
   public void buildDerivations(){
-	  
+
   }
-  
+
   // Collaborative Pruning
   protected List<Rule> rules;
   protected List<Rule> catUnaryRules;
-  
+
   public void explore() {
-	  CollaborativePruningComputer.initialize(ex, CollaborativePruningComputer.Mode.EXPLORE);
-	  rules = parser.grammar.rules;
-	  catUnaryRules = parser.getCatUnaryRules();
-	  
-	  buildDerivations();
+    CollaborativePruningComputer.initialize(ex, CollaborativePruningComputer.Mode.EXPLORE);
+    rules = parser.grammar.rules;
+    catUnaryRules = parser.getCatUnaryRules();
+
+    buildDerivations();
       CollaborativePruningComputer.stats.totalExplore += 1;
       if (CollaborativePruningComputer.foundConsistentDerivation)
-    	  CollaborativePruningComputer.stats.successfulExplore += 1;
+        CollaborativePruningComputer.stats.successfulExplore += 1;
   }
-  
+
   public boolean exploit() {
-	  CollaborativePruningComputer.initialize(ex, CollaborativePruningComputer.Mode.EXPLOIT);
-	  rules = CollaborativePruningComputer.predictedRules;
-	  catUnaryRules = CollaborativePruningComputer.predictedCatUnaryRules;
-	  
-	  buildDerivations();	  
-	  boolean succeeds = CollaborativePruningComputer.foundConsistentDerivation;
-	  CollaborativePruningComputer.stats.totalExploit += 1;
+    CollaborativePruningComputer.initialize(ex, CollaborativePruningComputer.Mode.EXPLOIT);
+    rules = CollaborativePruningComputer.predictedRules;
+    catUnaryRules = CollaborativePruningComputer.predictedCatUnaryRules;
+
+    buildDerivations();
+    boolean succeeds = CollaborativePruningComputer.foundConsistentDerivation;
+    CollaborativePruningComputer.stats.totalExploit += 1;
       if (succeeds)
-    	  CollaborativePruningComputer.stats.successfulExploit += 1;
+        CollaborativePruningComputer.stats.successfulExploit += 1;
       return succeeds;
   }
 }
