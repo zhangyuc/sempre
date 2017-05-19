@@ -36,7 +36,7 @@ if [ "$1" == "-n" ]; then
   dryrun=1;
 fi
 
-dependencies=":fig :lib libsempre:stuff/libsempre module-classes.txt:stuff/module-classes.txt run:stuff/run grammars:stuff/grammars :WikiTableQuestions"
+dependencies=":fig :lib libsempre:stuff/libsempre module-classes.txt:stuff/module-classes.txt run:stuff/run grammars:stuff/grammars WikiTableQuestions:WikiTableQuestions-v1.0.2"
 if [ "$1" == "--" ]; then
   shift 
   while [ "$1" != "--" ]; do

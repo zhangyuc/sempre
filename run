@@ -823,8 +823,9 @@ end
 
 def tablesDataPaths
   lambda { |e|
-    baseDir = ['lib/data/tables/data/', 'WikiTableQuestions/data/'][e[:cldir]]
-    csvDir = ['lib/data/tables/', 'WikiTableQuestions/'][e[:cldir]]
+    baseDir = ['lib/data/WikiTableQuestions/data/', 'WikiTableQuestions/data/'][e[:cldir]]
+    csvDir = ['lib/data/WikiTableQuestions/', 'WikiTableQuestions/'][e[:cldir]]
+    nnDir = ['tables/nn_0/', 'nn_0/'][e[:cldir]]
     datasets = {
       'none' => l(),
       # Pristine test test
@@ -832,17 +833,19 @@ def tablesDataPaths
         o('Dataset.inPaths',
           "train,#{baseDir}training.examples",
           "test,#{baseDir}pristine-unseen-tables.examples"),
-        o('Dataset.trainFrac', 1), o('Dataset.devFrac', 0),o('neighborFilePath', "tables/nn_0/exact_nearest_neighbors.all"),
+        o('Dataset.trainFrac', 1), o('Dataset.devFrac', 0),
+        o('neighborFilePath', "#{nnDir}/exact_nearest_neighbors.all"),
         let(:unseen, 1),
       nil),
     }
     # Development sets: 80:20 random split of training data
-    ['1', '2', '3', '4', '5', '6'].each do |x|
+    ['1', '2', '3', '4', '5'].each do |x|
       datasets['u-' + x] = l(
         o('Dataset.inPaths',
-          "train,#{baseDir}random-split-seed-#{x}-train.examples",
-          "dev,#{baseDir}random-split-seed-#{x}-test.examples",
-        nil),o('neighborFilePath', "tables/nn_0/exact_nearest_neighbors.seed-#{x}.train"),
+          "train,#{baseDir}random-split-#{x}-train.examples",
+          "dev,#{baseDir}random-split-#{x}-dev.examples",
+        nil),
+        o('neighborFilePath', "#{nnDir}/exact_nearest_neighbors.seed-#{x}.train"),
         let(:unseen, 1),
       nil)
     end
