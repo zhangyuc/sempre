@@ -111,7 +111,7 @@ public class Learner {
         CollaborativePruningComputer.loadNeighbors();
       }
       for (String group : dataset.groups()) {
-      CollaborativePruningComputer.stats.reset(iter + "." + group);
+        CollaborativePruningComputer.stats.reset(iter + "." + group);
 
         boolean lastIter = (iter == numIters);
         boolean updateWeights = opts.updateWeights && group.equals("train") && !lastIter;  // Don't train on last iteration
