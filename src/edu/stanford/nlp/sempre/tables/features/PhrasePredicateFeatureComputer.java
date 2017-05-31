@@ -150,11 +150,13 @@ public class PhrasePredicateFeatureComputer implements FeatureComputer {
       }
     }
     if (FeatureExtractor.containsDomain("phrase-predicate") && opts.lexicalizedPhrasePredicate
-        && phraseInfo.end - phraseInfo.start <= maxNforLexicalizeAllPairs) {
+        && phraseInfo.end - phraseInfo.start <= maxNforLexicalizeAllPairs
+        && (!PhraseInfo.opts.forbidBorderStopWordInLexicalizedFeatures || !phraseInfo.isBorderStopWord)) {
       deriv.addFeature("p-p",
           phraseType + phraseString + ";" + predicateType + predicateString, factor);
     }
-    if (FeatureExtractor.containsDomain("phrase-category") && predicateInfo.type == PredicateType.BINARY) {
+    if (FeatureExtractor.containsDomain("phrase-category") && predicateInfo.type == PredicateType.BINARY
+        && (!PhraseInfo.opts.forbidBorderStopWordInLexicalizedFeatures || !phraseInfo.isBorderStopWord)) {
       ColumnCategoryInfo catInfo = ColumnCategoryInfo.getSingleton();
       List<Pair<String, Double>> categories = catInfo.get(ex, predicateInfo.predicate);
       if (categories != null) {

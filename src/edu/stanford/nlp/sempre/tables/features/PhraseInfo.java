@@ -1,6 +1,7 @@
 package edu.stanford.nlp.sempre.tables.features;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 import edu.stanford.nlp.sempre.*;
 import edu.stanford.nlp.sempre.FuzzyMatchFn.FuzzyMatchFnMode;
@@ -22,6 +23,8 @@ public class PhraseInfo {
     public boolean usePhraseLemmaOnly = false;
     @Option(gloss = "Fuzzy match predicates")
     public boolean computeFuzzyMatchPredicates = false;
+    @Option(gloss = "Do not produce lexicalized features if the phrase begins or ends with a stop word")
+    public boolean forbidBorderStopWordInLexicalizedFeatures = false;
   }
   public static Options opts = new Options();
 
@@ -34,6 +37,7 @@ public class PhraseInfo {
   public final List<String> nerTags;
   public final String canonicalPosSeq;
   public final List<String> fuzzyMatchedPredicates;
+  public final boolean isBorderStopWord;     // true if the first or last word is a stop word
 
   public PhraseInfo(Example ex, int start, int end) {
     this.start = start;
@@ -48,6 +52,7 @@ public class PhraseInfo {
     lemmaText = languageInfo.lemmaPhrase(start, end).toLowerCase();
     canonicalPosSeq = languageInfo.canonicalPosSeq(start, end);
     fuzzyMatchedPredicates = opts.computeFuzzyMatchPredicates ? getFuzzyMatchedPredicates(ex.context) : null;
+    isBorderStopWord = isStopWord(languageInfo.lemmaTokens.get(start)) || isStopWord(languageInfo.lemmaTokens.get(end - 1));
   }
 
   private List<String> getFuzzyMatchedPredicates(ContextValue context) {
@@ -72,6 +77,17 @@ public class PhraseInfo {
       }
     }
     return matchedPredicates;
+  }
+
+  static final Pattern ALL_PUNCT = Pattern.compile("^[^A-Za-z0-9]*$");
+  static final Set<String> STOP_WORDS = new HashSet<>(Arrays.asList(
+      "a", "an", "the", "be", "of", "in", "on", "do"
+      ));
+
+  static boolean isStopWord(String x) {
+    if (ALL_PUNCT.matcher(x).matches()) return true;
+    if (STOP_WORDS.contains(x)) return true;
+    return false;
   }
 
   @Override

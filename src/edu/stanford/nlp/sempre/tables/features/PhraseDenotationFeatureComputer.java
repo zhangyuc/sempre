@@ -120,6 +120,7 @@ public class PhraseDenotationFeatureComputer implements FeatureComputer {
       LogInfo.logs("%s %s %s", deriv.value, deriv.type, denotationTypes);
     for (String denotationType : denotationTypes) {
       for (PhraseInfo phraseInfo : phraseInfos) {
+        if (PhraseInfo.opts.forbidBorderStopWordInLexicalizedFeatures && phraseInfo.isBorderStopWord) continue;
         if (!PhraseInfo.opts.usePhraseLemmaOnly) {
           deriv.addFeature("p-d", "(o)" + phraseInfo.text + ";" + denotationType);
         }

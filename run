@@ -740,6 +740,10 @@ addMode('tables', 'QA on HTML tables', lambda { |e| l(
       o('FeatureExtractor.featureDomains', 'custom-denotation phrase-predicate phrase-denotation headword-denotation missing-predicate'.split),
       o('FeatureExtractor.featureComputers', 'tables.features.PhrasePredicateFeatureComputer tables.features.PhraseDenotationFeatureComputer'.split),
     nil),
+    'more' => l(
+      o('FeatureExtractor.featureDomains', 'custom-denotation phrase-predicate phrase-denotation headword-denotation missing-predicate anchored-entity'.split),
+      o('FeatureExtractor.featureComputers', 'tables.features.PhrasePredicateFeatureComputer tables.features.PhraseDenotationFeatureComputer tables.features.AnchorFeatureComputer'.split),
+    nil),
     'baseline' => l( # For the baseline classifier
       o('FeatureExtractor.featureDomains', 'custom-denotation phrase-denotation headword-denotation table-baseline'.split),
       o('FeatureExtractor.featureComputers', 'tables.baseline.TableBaselineFeatureComputer tables.features.PhraseDenotationFeatureComputer'.split),
