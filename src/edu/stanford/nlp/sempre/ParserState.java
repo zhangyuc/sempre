@@ -376,8 +376,10 @@ public abstract class ParserState {
     CollaborativePruningComputer.initialize(ex, CollaborativePruningComputer.Mode.EXPLORE);
     rules = parser.grammar.rules;
     catUnaryRules = parser.getCatUnaryRules();
+    LogInfo.logs("EXPLORE: Using %d rules + %d catUnaryRules", rules.size(), catUnaryRules.size());
 
     buildDerivations();
+    LogInfo.logs("EXPLORE: Found %d derivations", predDerivations.size());
       CollaborativePruningComputer.stats.totalExplore += 1;
       if (CollaborativePruningComputer.foundConsistentDerivation)
         CollaborativePruningComputer.stats.successfulExplore += 1;
@@ -387,8 +389,10 @@ public abstract class ParserState {
     CollaborativePruningComputer.initialize(ex, CollaborativePruningComputer.Mode.EXPLOIT);
     rules = CollaborativePruningComputer.predictedRules;
     catUnaryRules = CollaborativePruningComputer.predictedCatUnaryRules;
+    LogInfo.logs("EXPLOIT: Using %d rules + %d catUnaryRules", rules.size(), catUnaryRules.size());
 
     buildDerivations();
+    LogInfo.logs("EXPLOIT: Found %d derivations", predDerivations.size());
     boolean succeeds = CollaborativePruningComputer.foundConsistentDerivation;
     CollaborativePruningComputer.stats.totalExploit += 1;
       if (succeeds)

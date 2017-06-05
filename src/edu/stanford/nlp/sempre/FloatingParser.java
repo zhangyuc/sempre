@@ -380,6 +380,7 @@ class FloatingParserState extends ParserState {
       catUnaryRules = parser.getCatUnaryRules();
       buildDerivations();
     }
+    LogInfo.logs("Done building derivations");
 
     // Collect final predicted derivations
     addToDerivations(anchoredCell(Rule.rootCat, 0, numTokens), predDerivations);
