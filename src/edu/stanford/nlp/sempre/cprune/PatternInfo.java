@@ -41,11 +41,11 @@ public class PatternInfo {
 
   public static String convertToPattern(Derivation deriv) {
     String formula = deriv.formula.toString();
+    formula = formula.replace("argmax (number 1) (number 1)", "argmax");
+    formula = formula.replace("argmin (number 1) (number 1)", "argmin");
     formula = removePropertyPredicates(formula);
 
     formula = formula.replace("fb:type.object.type fb:type.row", "@type @row");
-    formula = formula.replace("argmax (number 1) (number 1)", "argmax");
-    formula = formula.replace("argmin (number 1) (number 1)", "argmin");
 
     formula = RegexReplaceManager.replace(formula, "!fb:[._0-9a-z]+", "(reverse $0)").replace("reverse !fb", "reverse fb");
     formula = formula.replace("fb:row.row.index", "(reverse (lambda x ((reverse @index) (var x))))");
@@ -68,12 +68,12 @@ public class PatternInfo {
 
   public static String convertToIndexedPattern(Derivation deriv) {
     String formula = deriv.formula.toString();
+    formula = formula.replace("argmax (number 1) (number 1)", "argmax");
+    formula = formula.replace("argmin (number 1) (number 1)", "argmin");
     formula = removePropertyPredicates(formula);
     formula = CustomGrammar.getIndexedSymbolicFormula(deriv, formula);
 
     formula = formula.replace("fb:type.object.type fb:type.row", "@type @row");
-    formula = formula.replace("argmax (number 1) (number 1)", "argmax");
-    formula = formula.replace("argmin (number 1) (number 1)", "argmin");
 
     formula = RegexReplaceManager.replace(formula, "!fb:[._0-9a-z]+", "(reverse $0)").replace("reverse !fb", "reverse fb");
     formula = formula.replace("fb:row.row.index", "(reverse (lambda x ((reverse @index) (var x))))");
