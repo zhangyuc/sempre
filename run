@@ -827,8 +827,8 @@ end
 
 def tablesDataPaths
   lambda { |e|
-    baseDir = ['lib/data/WikiTableQuestions/data/', 'WikiTableQuestions/data/'][e[:cldir]]
-    csvDir = ['lib/data/WikiTableQuestions/', 'WikiTableQuestions/'][e[:cldir]]
+    baseDir = ['lib/data/tables/data/', 'WikiTableQuestions/data/'][e[:cldir]]
+    csvDir = ['lib/data/tables/', 'WikiTableQuestions/'][e[:cldir]]
     nnDir = ['tables/nn_0/', 'nn_0/'][e[:cldir]]
     datasets = {
       'none' => l(),
