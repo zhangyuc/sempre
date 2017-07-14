@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import edu.stanford.nlp.sempre.cprune.*; 
+import edu.stanford.nlp.sempre.cprune.*;
 
 /**
  * The main learning loop.  Goes over a dataset multiple times, calling the
@@ -112,7 +112,7 @@ public class Learner {
       }
       for (String group : dataset.groups()) {
     	CollaborativePruningComputer.stats.reset(iter + "." + group);
-    	
+
         boolean lastIter = (iter == numIters);
         boolean updateWeights = opts.updateWeights && group.equals("train") && !lastIter;  // Don't train on last iteration
         Evaluation eval = processExamples(
@@ -283,6 +283,7 @@ public class Learner {
    // evaluation.add(LexiconFn.lexEval);
     evaluation.logStats(prefix);
     evaluation.putOutput(prefix);
+    evaluation.putOutput(prefix.replaceAll("iter=", "").replace('.', '_'));
   }
 
   private void printLearnerEventsIter(Example ex, int iter, String group) {
