@@ -41,6 +41,8 @@ public class NameValue extends Value {
     return tree;
   }
 
+  @Override public String pureString() { return description == null ? id : description; }
+
   @Override public int hashCode() { return id.hashCode(); }
   @Override public boolean equals(Object o) {
     if (this == o) return true;

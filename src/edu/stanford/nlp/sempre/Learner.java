@@ -28,6 +28,8 @@ public class Learner {
 
     @Option(gloss = "Write predDerivations to examples file (huge)")
     public boolean outputPredDerivations = false;
+    @Option(gloss = "Write predicted values to a TSV file")
+    public boolean outputPredValues = true;
 
     @Option(gloss = "Dump all features and compatibility scores")
     public boolean dumpFeaturesAndCompatibility = false;
@@ -204,6 +206,9 @@ public class Learner {
       // Write out examples and predictions
       if (opts.outputPredDerivations && Builder.opts.parser.equals("FloatingParser")) {
         ExampleUtils.writeParaphraseSDF(iter, group, ex, opts.outputPredDerivations);
+      }
+      if (opts.outputPredValues) {
+        ExampleUtils.writePredictionTSV(iter, group, ex);
       }
 
       // To save memory

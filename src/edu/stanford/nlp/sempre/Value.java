@@ -21,6 +21,9 @@ public abstract class Value {
   @JsonValue
   public String toString() { return toLispTree().toString(); }
 
+  // (optional) String without the LispTree structure. The default is to call toString()
+  public String pureString() { return toString(); }
+
   @JsonCreator
   public static Value fromString(String str) {
     return Values.fromLispTree(LispTree.proto.parseFromString(str));
