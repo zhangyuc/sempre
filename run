@@ -644,6 +644,7 @@ addMode('tables', 'QA on HTML tables', lambda { |e| l(
     'dump' => 'edu.stanford.nlp.sempre.tables.serialize.SerializedDumper',
     'load' => 'edu.stanford.nlp.sempre.tables.serialize.SerializedLoader',
     'stats' => 'edu.stanford.nlp.sempre.tables.test.TableStatsComputer',
+    'execute' => 'edu.stanford.nlp.sempre.tables.test.BatchTableExecutor',
   }),
   # Fig parameters
   selo(:cldir, 'execDir', '_OUTPATH_', '.'),

@@ -22,7 +22,7 @@ if [ "$operation" == "up" ]; then
 elif [ "$operation" == "walk" ]; then
   queue="--request-memory 11g --request-cpus 2 --request-queue nlp"
 elif [ "$operation" == "run" ]; then
-  queue="--request-memory 11g --request-cpus 2 --request-queue john"
+  queue="--request-memory 16g --request-cpus 2 --request-queue john"
 elif [ "$operation" == "jog" ]; then
   queue="--request-memory 11g --request-cpus 2 --request-queue jag"
 else
